@@ -1,0 +1,10 @@
+[
+  {
+    "id": "suivi_001",
+    "chercheurId": "usr_c01",
+    "annonceId": "ann_013",
+    "heuresTravaillees": 2,
+    "montantGagne": 20,
+    "dateTravail": "2026-01-24"
+  }
+]

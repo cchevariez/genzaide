@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#003399">
+  <title>Publier une annonce - GenZ'aide</title>
+  <link rel="icon" type="image/png" href="img/logo.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div class="page">
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="container">
+        <a href="/"><img src="img/logo.png" alt="GenZ'aide" class="navbar-logo"></a>
+        <div class="navbar-links">
+          <a href="chercheur.html">Carte</a>
+          <a href="profil.html" class="nav-profil" style="display:none">Profil</a>
+          <a href="#" class="nav-auth">Connexion</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Contenu principal -->
+    <div class="container" style="padding: 1.5rem 1rem; flex: 1;">
+      <div style="max-width: 550px; margin: 0 auto;">
+
+        <!-- Barre de progression -->
+        <div class="wizard-progress" id="wizard-progress"></div>
+
+        <!-- Étape 1 : Catégorie -->
+        <div class="wizard-panel active" data-step="1">
+          <h2 class="wizard-title">Quel type de job ?</h2>
+          <p class="wizard-subtitle">Choisis la catégorie qui correspond le mieux</p>
+          <div class="choice-grid" id="category-grid"></div>
+        </div>
+
+        <!-- Étape 2 : Sous-catégorie -->
+        <div class="wizard-panel" data-step="2">
+          <h2 class="wizard-title">Plus précisément...</h2>
+          <p class="wizard-subtitle">Quel type de tâche à effectuer ?</p>
+          <div class="choice-grid" id="subcategory-grid"></div>
+          <div class="wizard-nav">
+            <button class="btn btn-outline" onclick="Wizard.prev()">Retour</button>
+          </div>
+        </div>
+
+        <!-- Étape 3 : Localisation -->
+        <div class="wizard-panel" data-step="3">
+          <h2 class="wizard-title">Où se situe le job ?</h2>
+          <p class="wizard-subtitle">Indique la commune pour localiser l'annonce</p>
+          <div class="form-group">
+            <label class="form-label">Commune</label>
+            <input type="text" class="form-input" id="wizard-commune" placeholder="Ex: Lyon, Marseille, Paris 15e..."
+              autocomplete="off">
+            <div id="commune-suggestions" style="display:none"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Adresse (optionnel)</label>
+            <input type="text" class="form-input" id="wizard-adresse" placeholder="Ex: 12 rue de la République">
+          </div>
+          <div class="wizard-nav">
+            <button class="btn btn-outline" onclick="Wizard.prev()">Retour</button>
+            <button class="btn btn-bleu" onclick="Wizard.next()">Suivant</button>
+          </div>
+        </div>
+
+        <!-- Étape 4 : Rémunération et durée -->
+        <div class="wizard-panel" data-step="4">
+          <h2 class="wizard-title">Rémunération et durée</h2>
+          <p class="wizard-subtitle">Définis le salaire et la durée estimée</p>
+
+          <div class="form-group">
+            <label class="form-label">Salaire horaire</label>
+            <div class="choice-grid" id="salaire-grid">
+              <div class="choice-option" data-value="8" onclick="Wizard.selectSalaire(this)">
+                <span class="choice-label">8 €/h</span>
+              </div>
+              <div class="choice-option" data-value="10" onclick="Wizard.selectSalaire(this)">
+                <span class="choice-label">10 €/h</span>
+              </div>
+              <div class="choice-option" data-value="12" onclick="Wizard.selectSalaire(this)">
+                <span class="choice-label">12 €/h</span>
+              </div>
+              <div class="choice-option" data-value="15" onclick="Wizard.selectSalaire(this)">
+                <span class="choice-label">15 €/h</span>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: 0.75rem;">
+              <input type="number" class="form-input" id="wizard-salaire-custom"
+                placeholder="Ou entre un montant personnalisé (€/h)" min="1" max="50" step="0.5">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Durée estimée</label>
+            <div class="choice-grid" id="duree-grid">
+              <div class="choice-option" data-value="1" onclick="Wizard.selectDuree(this)">
+                <span class="choice-label">1 heure</span>
+              </div>
+              <div class="choice-option" data-value="2" onclick="Wizard.selectDuree(this)">
+                <span class="choice-label">2 heures</span>
+              </div>
+              <div class="choice-option" data-value="3" onclick="Wizard.selectDuree(this)">
+                <span class="choice-label">3 heures</span>
+              </div>
+              <div class="choice-option" data-value="4" onclick="Wizard.selectDuree(this)">
+                <span class="choice-label">Demi-journée</span>
+              </div>
+              <div class="choice-option" data-value="8" onclick="Wizard.selectDuree(this)">
+                <span class="choice-label">Journée</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="wizard-nav">
+            <button class="btn btn-outline" onclick="Wizard.prev()">Retour</button>
+            <button class="btn btn-bleu" onclick="Wizard.next()">Suivant</button>
+          </div>
+        </div>
+
+        <!-- Étape 5 : Résumé et publication -->
+        <div class="wizard-panel" data-step="5">
+          <h2 class="wizard-title">Ton annonce</h2>
+          <p class="wizard-subtitle">Vérifie et modifie si besoin avant de publier</p>
+
+          <div id="annonce-preview" class="card" style="margin-bottom: 1rem;"></div>
+
+          <div class="form-group">
+            <label class="form-label">Description de l'annonce</label>
+            <textarea class="form-textarea" id="wizard-description" rows="4"></textarea>
+            <p class="form-hint">Tu peux modifier le texte généré ci-dessus</p>
+          </div>
+
+          <div class="wizard-nav">
+            <button class="btn btn-outline" onclick="Wizard.prev()">Retour</button>
+            <button class="btn btn-orange btn-lg" onclick="Wizard.publish()" style="flex:2">
+              Publier l'annonce
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/fournisseur.js"></script>
+</body>
+</html>

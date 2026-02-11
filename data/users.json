@@ -1,0 +1,112 @@
+[
+  {
+    "id": "usr_f01",
+    "role": "fournisseur",
+    "nom": "Martin",
+    "prenom": "Catherine",
+    "email": "catherine.martin@email.fr",
+    "commune": "Lyon 3e",
+    "dateInscription": "2026-01-15T10:00:00Z",
+    "noteMoyenne": 4.5,
+    "nombreNotations": 3
+  },
+  {
+    "id": "usr_f02",
+    "role": "fournisseur",
+    "nom": "Dubois",
+    "prenom": "Pierre",
+    "email": "pierre.dubois@email.fr",
+    "commune": "Lyon 6e",
+    "dateInscription": "2026-01-20T10:00:00Z",
+    "noteMoyenne": 4,
+    "nombreNotations": 2
+  },
+  {
+    "id": "usr_f03",
+    "role": "fournisseur",
+    "nom": "Bernard",
+    "prenom": "Sylvie",
+    "email": "sylvie.bernard@email.fr",
+    "commune": "Villeurbanne",
+    "dateInscription": "2026-01-22T10:00:00Z",
+    "noteMoyenne": 5,
+    "nombreNotations": 1
+  },
+  {
+    "id": "usr_f04",
+    "role": "fournisseur",
+    "nom": "Leroy",
+    "prenom": "Jacques",
+    "email": "jacques.leroy@email.fr",
+    "commune": "Caluire",
+    "dateInscription": "2026-02-01T10:00:00Z",
+    "noteMoyenne": 3.5,
+    "nombreNotations": 2
+  },
+  {
+    "id": "usr_f05",
+    "role": "fournisseur",
+    "nom": "Moreau",
+    "prenom": "Anne",
+    "email": "anne.moreau@email.fr",
+    "commune": "Bron",
+    "dateInscription": "2026-02-05T10:00:00Z",
+    "noteMoyenne": 4.8,
+    "nombreNotations": 4
+  },
+  {
+    "id": "usr_c01",
+    "role": "chercheur",
+    "nom": "Petit",
+    "prenom": "Lucas",
+    "email": "lucas.petit@email.fr",
+    "commune": "Lyon 7e",
+    "dateInscription": "2026-01-18T10:00:00Z",
+    "noteMoyenne": 4.7,
+    "nombreNotations": 3
+  },
+  {
+    "id": "usr_c02",
+    "role": "chercheur",
+    "nom": "Garcia",
+    "prenom": "Emma",
+    "email": "emma.garcia@email.fr",
+    "commune": "Lyon 3e",
+    "dateInscription": "2026-01-25T10:00:00Z",
+    "noteMoyenne": 4.2,
+    "nombreNotations": 2
+  },
+  {
+    "id": "usr_c03",
+    "role": "chercheur",
+    "nom": "Roux",
+    "prenom": "Nathan",
+    "email": "nathan.roux@email.fr",
+    "commune": "Villeurbanne",
+    "dateInscription": "2026-02-02T10:00:00Z",
+    "noteMoyenne": 5,
+    "nombreNotations": 1
+  },
+  {
+    "id": "usr_c04",
+    "role": "chercheur",
+    "nom": "Thomas",
+    "prenom": "Chloé",
+    "email": "chloe.thomas@email.fr",
+    "commune": "Caluire",
+    "dateInscription": "2026-02-08T10:00:00Z",
+    "noteMoyenne": 0,
+    "nombreNotations": 0
+  },
+  {
+    "id": "usr_1770802822192_jtfnv",
+    "role": "fournisseur",
+    "nom": "Chevarier",
+    "prenom": "Cédric",
+    "email": "cchevarier@gmail.com",
+    "commune": "Saint-André-de-Corcy",
+    "dateInscription": "2026-02-11T09:40:22.192Z",
+    "noteMoyenne": 0,
+    "nombreNotations": 0
+  }
+]

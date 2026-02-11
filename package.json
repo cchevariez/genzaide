@@ -1,0 +1,16 @@
+{
+  "name": "genzaide",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node data/seed.js"
+  },
+  "keywords": [],
+  "author": "GenZ'aide",
+  "license": "ISC",
+  "description": "Application de petits boulots pour les jeunes",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

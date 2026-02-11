@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#003399">
+  <title>Mon profil - GenZ'aide</title>
+  <link rel="icon" type="image/png" href="img/logo.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div class="page">
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="container">
+        <a href="/"><img src="img/logo.png" alt="GenZ'aide" class="navbar-logo"></a>
+        <div class="navbar-links">
+          <a href="chercheur.html">Carte</a>
+          <a href="fournisseur.html">Publier</a>
+          <a href="#" class="nav-auth">Connexion</a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container" style="padding: 1.5rem 1rem; flex: 1;">
+      <!-- État non connecté -->
+      <div id="not-logged-in" style="display:none">
+        <div class="empty-state">
+          <div class="empty-icon">👤</div>
+          <h2>Pas encore connecté</h2>
+          <p style="margin-bottom:1.5rem">Connecte-toi ou crée un compte pour accéder à ton profil.</p>
+          <button class="btn btn-bleu" onclick="Auth.showModal('chercheur', () => location.reload())">
+            Se connecter
+          </button>
+        </div>
+      </div>
+
+      <!-- Profil connecté -->
+      <div id="profil-content" style="display:none">
+        <!-- En-tête profil -->
+        <div class="profil-header">
+          <div class="profil-avatar" id="profil-avatar"></div>
+          <div class="profil-info">
+            <h2 id="profil-name"></h2>
+            <p id="profil-role"></p>
+            <div id="profil-stars"></div>
+          </div>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="profil-stats" id="profil-stats"></div>
+
+        <!-- Onglets -->
+        <div class="tabs" id="profil-tabs"></div>
+
+        <!-- Contenu des onglets -->
+        <div id="tab-annonces" class="tab-content"></div>
+        <div id="tab-candidatures" class="tab-content"></div>
+        <div id="tab-suivi" class="tab-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/profil.js"></script>
+</body>
+</html>

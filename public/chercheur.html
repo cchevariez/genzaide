@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#003399">
+  <title>Trouver un job - GenZ'aide</title>
+  <link rel="icon" type="image/png" href="img/logo.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/map.css">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+  <div class="page">
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="container">
+        <a href="/"><img src="img/logo.png" alt="GenZ'aide" class="navbar-logo"></a>
+        <div class="navbar-links">
+          <a href="fournisseur.html">Publier</a>
+          <a href="profil.html" class="nav-profil" style="display:none">Profil</a>
+          <a href="#" class="nav-auth">Connexion</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Carte -->
+    <div class="map-page">
+      <!-- Barre de recherche -->
+      <div class="map-search">
+        <input type="text" id="search-commune" placeholder="Rechercher une commune..." autocomplete="off">
+        <div class="map-search-suggestions" id="search-suggestions"></div>
+      </div>
+
+      <!-- Compteur -->
+      <div class="map-count" id="map-count" style="display:none"></div>
+
+      <!-- Carte Leaflet -->
+      <div id="map"></div>
+
+      <!-- Bouton localisation -->
+      <button class="map-locate-btn" id="locate-btn" title="Me localiser">📍</button>
+
+      <!-- Filtres en bas -->
+      <div class="map-filter-bar" id="filter-bar"></div>
+    </div>
+
+    <!-- Panneau détail d'annonce -->
+    <div class="detail-panel" id="detail-panel">
+      <div class="detail-panel-handle"></div>
+      <div id="detail-content"></div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/chercheur.js"></script>
+</body>
+</html>

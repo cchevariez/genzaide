@@ -1,0 +1,30 @@
+[
+  {
+    "id": "cand_001",
+    "annonceId": "ann_001",
+    "chercheurId": "usr_c01",
+    "dateCandidature": "2026-02-02T08:00:00Z",
+    "statut": "acceptee"
+  },
+  {
+    "id": "cand_002",
+    "annonceId": "ann_003",
+    "chercheurId": "usr_c02",
+    "dateCandidature": "2026-02-05T10:00:00Z",
+    "statut": "en_attente"
+  },
+  {
+    "id": "cand_003",
+    "annonceId": "ann_005",
+    "chercheurId": "usr_c03",
+    "dateCandidature": "2026-02-07T09:00:00Z",
+    "statut": "en_attente"
+  },
+  {
+    "id": "cand_004",
+    "annonceId": "ann_013",
+    "chercheurId": "usr_c01",
+    "dateCandidature": "2026-01-21T10:00:00Z",
+    "statut": "terminee"
+  }
+]
