@@ -95,6 +95,28 @@
           </div>
 
           <div class="form-group">
+            <label class="form-label">Tranche d'âge visée</label>
+            <div class="choice-grid" id="tranche-age-grid">
+              <div class="choice-option" data-value="14-15" onclick="Wizard.selectTrancheAge(this)">
+                <span class="choice-label">14-15 ans</span>
+              </div>
+              <div class="choice-option" data-value="16-17" onclick="Wizard.selectTrancheAge(this)">
+                <span class="choice-label">16-17 ans</span>
+              </div>
+              <div class="choice-option" data-value="18+" onclick="Wizard.selectTrancheAge(this)">
+                <span class="choice-label">18 ans et +</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Date du travail</label>
+            <input type="date" class="form-input" id="wizard-date-travail"
+              onchange="Wizard.data.dateTravail = this.value; Wizard.updateDateNote();">
+            <div id="date-travail-note" style="display:none"></div>
+          </div>
+
+          <div class="form-group">
             <label class="form-label">Durée estimée</label>
             <div class="choice-grid" id="duree-grid">
               <div class="choice-option" data-value="1" onclick="Wizard.selectDuree(this)">

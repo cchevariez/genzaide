@@ -26,5 +26,19 @@
     "chercheurId": "usr_c01",
     "dateCandidature": "2026-01-21T10:00:00Z",
     "statut": "terminee"
+  },
+  {
+    "id": "cand_1772439916786_1q4d2",
+    "annonceId": "ann_008",
+    "chercheurId": "usr_1772439916774_t6e1p",
+    "dateCandidature": "2026-03-02T08:25:16.786Z",
+    "statut": "en_attente"
+  },
+  {
+    "id": "cand_1772440076367_rmn80",
+    "annonceId": "ann_1772440057071_b2hv0",
+    "chercheurId": "usr_1772439916774_t6e1p",
+    "dateCandidature": "2026-03-02T08:27:56.367Z",
+    "statut": "en_attente"
   }
 ]

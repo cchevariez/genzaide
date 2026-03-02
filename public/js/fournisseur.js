@@ -12,6 +12,8 @@ const Wizard = {
     lng: null,
     salaireHeure: null,
     dureeHeures: null,
+    trancheAge: null,
+    dateTravail: null,
     description: ''
   },
 
@@ -80,12 +82,23 @@ const Wizard = {
         this.data.adresse = document.getElementById('wizard-adresse').value.trim();
         return true;
       case 4:
+        if (!this.data.trancheAge) {
+          App.showToast('Sélectionne une tranche d\'âge visée', 'error');
+          return false;
+        }
         const customSalaire = document.getElementById('wizard-salaire-custom').value;
         if (customSalaire) {
           this.data.salaireHeure = parseFloat(customSalaire);
         }
         if (!this.data.salaireHeure) {
           App.showToast('Indique un salaire horaire', 'error');
+          return false;
+        }
+        // Validation salaire minimum selon tranche d'âge
+        const salaireMin = { '14-15': 9.32, '16-17': 10.49, '18+': 11.65 };
+        const minReq = salaireMin[this.data.trancheAge];
+        if (this.data.salaireHeure < minReq) {
+          App.showToast(`Le salaire minimum pour la tranche ${this.data.trancheAge} est de ${minReq} €/h brut`, 'error');
           return false;
         }
         if (!this.data.dureeHeures) {
@@ -216,7 +229,30 @@ const Wizard = {
     });
   },
 
-  // Étape 4 : Salaire et durée
+  // Étape 4 : Tranche d'âge, date, salaire et durée
+  selectTrancheAge(el) {
+    document.querySelectorAll('#tranche-age-grid .choice-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    this.data.trancheAge = el.dataset.value;
+    this.updateDateNote();
+  },
+
+  updateDateNote() {
+    const noteDiv = document.getElementById('date-travail-note');
+    if (!this.data.trancheAge) {
+      noteDiv.style.display = 'none';
+      return;
+    }
+    let html = '';
+    if (this.data.trancheAge === '14-15') {
+      html = '<div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:0.75rem;margin-top:0.5rem;font-size:0.85rem;color:#e65100">Uniquement pendant les vacances scolaires, pas la nuit</div>';
+    } else if (this.data.trancheAge === '16-17') {
+      html = '<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;padding:0.75rem;margin-top:0.5rem;font-size:0.85rem;color:#1565c0">Pas entre 2h et 6h du matin</div>';
+    }
+    noteDiv.innerHTML = html;
+    noteDiv.style.display = html ? 'block' : 'none';
+  },
+
   selectSalaire(el) {
     document.querySelectorAll('#salaire-grid .choice-option').forEach(o => o.classList.remove('selected'));
     el.classList.add('selected');

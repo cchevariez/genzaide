@@ -1,3 +1,5 @@
+Déjà fait :
+
 But : Développement d'une application mobile et d'un site web permettant aux jeunes de trouver des petits boulots (accessible à des mineurs) sur une zone géographique.
 Fonctionnement : Le site propose deux interfaces selon que l'on soit fournisseur ou demandeur d'emploi. Le cas où une même personne est les deux est négligé. A l'entrée dans l'application, on demandera à l'utilisateur à quel groupe il appartient. Dans la suite, je vais te décrire brièvement les deux interfaces.
 Interface fournisseur d'emploi : Une fournisseur d'emploi va être invité à rédiger une annonce pour le travail qu'il propose. Pour ce faire, on ne proposera pas un champs de texte mais une interface faites de choix permettant à l'application de rédigé l'annonce pour le fournisseur. Evidemment, une fois l'annonce générée, on laissera la possibilité au fournisseur de pourvoir la modifiée.
@@ -16,3 +18,6 @@ Attention : cette application est dans un premier temps une démo pour un concou
 Je te laisse juge dans un premier temps des choix techologique. Fais toujours, le choix qui te parait le plus adapté en fonction des atttentes.
 Installe aussi tout ce qui t'es nécessaire. Fais le nécessaire pour que tu es tous les droits sur ce répertoire de travail.
 
+A faire : 
+Le logo a été modifier. Le nouveau logo est le fichier @logo2.png.
+Dans le fichier @modification02-03.pdf, tu trouveras des captures d'écran avec les modifications à effectuer.

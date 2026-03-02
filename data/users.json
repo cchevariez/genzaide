@@ -6,6 +6,7 @@
     "prenom": "Catherine",
     "email": "catherine.martin@email.fr",
     "commune": "Lyon 3e",
+    "age": 45,
     "dateInscription": "2026-01-15T10:00:00Z",
     "noteMoyenne": 4.5,
     "nombreNotations": 3
@@ -17,6 +18,7 @@
     "prenom": "Pierre",
     "email": "pierre.dubois@email.fr",
     "commune": "Lyon 6e",
+    "age": 62,
     "dateInscription": "2026-01-20T10:00:00Z",
     "noteMoyenne": 4,
     "nombreNotations": 2
@@ -28,6 +30,7 @@
     "prenom": "Sylvie",
     "email": "sylvie.bernard@email.fr",
     "commune": "Villeurbanne",
+    "age": 55,
     "dateInscription": "2026-01-22T10:00:00Z",
     "noteMoyenne": 5,
     "nombreNotations": 1
@@ -39,6 +42,7 @@
     "prenom": "Jacques",
     "email": "jacques.leroy@email.fr",
     "commune": "Caluire",
+    "age": 70,
     "dateInscription": "2026-02-01T10:00:00Z",
     "noteMoyenne": 3.5,
     "nombreNotations": 2
@@ -50,6 +54,7 @@
     "prenom": "Anne",
     "email": "anne.moreau@email.fr",
     "commune": "Bron",
+    "age": 38,
     "dateInscription": "2026-02-05T10:00:00Z",
     "noteMoyenne": 4.8,
     "nombreNotations": 4
@@ -61,6 +66,7 @@
     "prenom": "Lucas",
     "email": "lucas.petit@email.fr",
     "commune": "Lyon 7e",
+    "age": 17,
     "dateInscription": "2026-01-18T10:00:00Z",
     "noteMoyenne": 4.7,
     "nombreNotations": 3
@@ -72,6 +78,7 @@
     "prenom": "Emma",
     "email": "emma.garcia@email.fr",
     "commune": "Lyon 3e",
+    "age": 19,
     "dateInscription": "2026-01-25T10:00:00Z",
     "noteMoyenne": 4.2,
     "nombreNotations": 2
@@ -83,6 +90,7 @@
     "prenom": "Nathan",
     "email": "nathan.roux@email.fr",
     "commune": "Villeurbanne",
+    "age": 15,
     "dateInscription": "2026-02-02T10:00:00Z",
     "noteMoyenne": 5,
     "nombreNotations": 1
@@ -94,18 +102,20 @@
     "prenom": "Chloé",
     "email": "chloe.thomas@email.fr",
     "commune": "Caluire",
+    "age": 16,
     "dateInscription": "2026-02-08T10:00:00Z",
     "noteMoyenne": 0,
     "nombreNotations": 0
   },
   {
-    "id": "usr_1770802822192_jtfnv",
-    "role": "fournisseur",
+    "id": "usr_1772439916774_t6e1p",
+    "role": "chercheur",
     "nom": "Chevarier",
     "prenom": "Cédric",
     "email": "cchevarier@gmail.com",
     "commune": "Saint-André-de-Corcy",
-    "dateInscription": "2026-02-11T09:40:22.192Z",
+    "age": 14,
+    "dateInscription": "2026-03-02T08:25:16.774Z",
     "noteMoyenne": 0,
     "nombreNotations": 0
   }

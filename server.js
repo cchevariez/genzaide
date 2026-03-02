@@ -105,6 +105,8 @@ app.post('/api/annonces', (req, res) => {
     salaireHeure: req.body.salaireHeure,
     dureeHeures: req.body.dureeHeures,
     description: req.body.description,
+    trancheAge: req.body.trancheAge || null,
+    dateTravail: req.body.dateTravail || null,
     dateCreation: new Date().toISOString(),
     statut: 'ouverte',
     candidatures: []
@@ -142,6 +144,7 @@ app.post('/api/users', (req, res) => {
     prenom: req.body.prenom,
     email: req.body.email,
     commune: req.body.commune || '',
+    age: req.body.age || null,
     dateInscription: new Date().toISOString(),
     noteMoyenne: 0,
     nombreNotations: 0
@@ -213,6 +216,31 @@ app.put('/api/candidatures/:id', (req, res) => {
   const index = candidatures.findIndex(c => c.id === req.params.id);
   if (index === -1) return res.status(404).json({ error: 'Candidature non trouvée' });
 
+  // Vérifier le plafond de 1000 €/mois avant de marquer comme terminée
+  if (req.body.statut === 'terminee') {
+    const annonces = readJSON('annonces.json');
+    const annonce = annonces.find(a => a.id === candidatures[index].annonceId);
+    if (annonce) {
+      const suiviLegal = readJSON('suivi-legal.json');
+      const now = new Date();
+      const moisCourant = suiviLegal.filter(s => {
+        const d = new Date(s.dateTravail);
+        return s.chercheurId === candidatures[index].chercheurId &&
+          d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+      const totalMois = moisCourant.reduce((sum, s) => sum + s.montantGagne, 0);
+      const montantAnnonce = annonce.dureeHeures * annonce.salaireHeure;
+      if (totalMois + montantAnnonce > 1000) {
+        return res.status(400).json({
+          error: 'Plafond de 1000 €/mois atteint',
+          totalMois,
+          montantAnnonce,
+          restant: Math.max(0, 1000 - totalMois)
+        });
+      }
+    }
+  }
+
   if (req.body.statut) {
     candidatures[index].statut = req.body.statut;
   }
@@ -248,6 +276,7 @@ app.post('/api/notations', (req, res) => {
     noteurId: req.body.noteurId,
     noteId: req.body.noteId,
     etoiles: Math.min(5, Math.max(1, parseInt(req.body.etoiles))),
+    commentaire: req.body.commentaire || '',
     dateNotation: new Date().toISOString()
   };
   notations.push(notation);
@@ -274,6 +303,14 @@ app.get('/api/notations', (req, res) => {
   }
   if (req.query.annonceId) {
     notations = notations.filter(n => n.annonceId === req.query.annonceId);
+  }
+  // Enrichir avec les infos du noteur si demandé
+  if (req.query.withNoteur === 'true') {
+    const users = readJSON('users.json');
+    notations = notations.map(n => {
+      const noteur = users.find(u => u.id === n.noteurId);
+      return { ...n, noteurNom: noteur ? `${noteur.prenom} ${noteur.nom[0]}.` : 'Anonyme' };
+    });
   }
   res.json(notations);
 });

@@ -155,7 +155,7 @@ const Profil = {
         <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
           <div class="profil-avatar" style="width:32px;height:32px;font-size:0.8rem">${chercheur.prenom[0]}${chercheur.nom[0]}</div>
           <div>
-            <strong>${chercheur.prenom} ${chercheur.nom[0]}.</strong>
+            <a href="profil-public.html?id=${chercheur.id}" style="font-weight:700;color:var(--bleu);text-decoration:none">${chercheur.prenom} ${chercheur.nom[0]}.</a>
             <span style="font-size:0.8rem;margin-left:0.3rem">${App.renderStars(chercheur.noteMoyenne)}</span>
           </div>
         </div>
@@ -206,6 +206,15 @@ const Profil = {
       const candidatures = await API.getCandidatures({ chercheurId: this.user.id });
       const suivi = await API.getSuiviLegal(this.user.id);
 
+      // Calcul du total gagné ce mois-ci
+      const now = new Date();
+      const gainsMoisCourant = suivi.details
+        .filter(s => {
+          const d = new Date(s.dateTravail);
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        })
+        .reduce((sum, s) => sum + s.montantGagne, 0);
+
       // Stats
       document.getElementById('profil-stats').innerHTML = `
         <div class="stat-card">
@@ -221,6 +230,20 @@ const Profil = {
           <div class="stat-label">Gagné</div>
         </div>
       `;
+
+      // Avertissement plafond 1000 €/mois
+      if (gainsMoisCourant >= 800) {
+        const restant = Math.max(0, 1000 - gainsMoisCourant);
+        const color = gainsMoisCourant >= 1000 ? '#c62828' : '#e65100';
+        const bg = gainsMoisCourant >= 1000 ? '#ffebee' : '#fff3e0';
+        const border = gainsMoisCourant >= 1000 ? '#ef9a9a' : '#ffb74d';
+        const msg = gainsMoisCourant >= 1000
+          ? 'Tu as atteint le plafond de 1 000 €/mois. Tu ne peux plus accepter de missions ce mois-ci.'
+          : `Attention : tu as gagné ${App.formatMoney(gainsMoisCourant)} ce mois-ci. Il te reste ${App.formatMoney(restant)} avant d'atteindre le plafond de 1 000 €/mois.`;
+        document.getElementById('profil-stats').insertAdjacentHTML('afterend',
+          `<div style="background:${bg};border:1px solid ${border};border-radius:8px;padding:0.75rem;margin-bottom:1rem;font-size:0.85rem;color:${color}"><strong>Plafond mensuel</strong><br>${msg}</div>`
+        );
+      }
 
       // Candidatures
       const tabCand = document.getElementById('tab-candidatures');
@@ -353,6 +376,10 @@ const Profil = {
           </div>
           <p id="rating-label" style="margin-top:0.5rem;color:var(--texte-secondaire);font-size:0.9rem">Sélectionne une note</p>
         </div>
+        <div class="form-group">
+          <label class="form-label">Commentaire (optionnel)</label>
+          <textarea class="form-textarea" id="rating-comment" rows="3" placeholder="Décris ton expérience..."></textarea>
+        </div>
         <button class="btn btn-orange btn-block" id="submit-rating" disabled>Envoyer</button>
       </div>
     `;
@@ -375,11 +402,13 @@ const Profil = {
 
     overlay.querySelector('#submit-rating').addEventListener('click', async () => {
       try {
+        const commentaire = overlay.querySelector('#rating-comment').value.trim();
         await API.createNotation({
           annonceId,
           noteurId: this.user.id,
           noteId,
-          etoiles: selectedRating
+          etoiles: selectedRating,
+          commentaire
         });
         App.showToast('Merci pour ton avis !', 'success');
         overlay.remove();

@@ -5,6 +5,7 @@
     "noteurId": "usr_f01",
     "noteId": "usr_c01",
     "etoiles": 5,
+    "commentaire": "Lucas a fait un excellent travail, très soigneux et ponctuel !",
     "dateNotation": "2026-01-25T14:00:00Z"
   },
   {
@@ -13,6 +14,7 @@
     "noteurId": "usr_c01",
     "noteId": "usr_f01",
     "etoiles": 4,
+    "commentaire": "Très bon accueil, consignes claires. Je recommande.",
     "dateNotation": "2026-01-25T15:00:00Z"
   },
   {
@@ -21,6 +23,7 @@
     "noteurId": "usr_f02",
     "noteId": "usr_c01",
     "etoiles": 5,
+    "commentaire": "Travail impeccable, je ferai appel à lui à nouveau.",
     "dateNotation": "2026-02-03T10:00:00Z"
   },
   {
@@ -29,6 +32,7 @@
     "noteurId": "usr_f01",
     "noteId": "usr_c02",
     "etoiles": 4,
+    "commentaire": "Emma est sérieuse et agréable. Courses bien faites.",
     "dateNotation": "2026-02-04T10:00:00Z"
   },
   {
@@ -37,6 +41,7 @@
     "noteurId": "usr_c02",
     "noteId": "usr_f03",
     "etoiles": 5,
+    "commentaire": "Super expérience, le chien était adorable !",
     "dateNotation": "2026-02-06T10:00:00Z"
   },
   {
@@ -45,6 +50,7 @@
     "noteurId": "usr_c03",
     "noteId": "usr_f04",
     "etoiles": 3,
+    "commentaire": "Correct mais les outils n'étaient pas tous prêts.",
     "dateNotation": "2026-02-07T10:00:00Z"
   },
   {
@@ -53,6 +59,7 @@
     "noteurId": "usr_f04",
     "noteId": "usr_c01",
     "etoiles": 4,
+    "commentaire": "Bon travail, toujours fiable.",
     "dateNotation": "2026-02-08T10:00:00Z"
   },
   {
@@ -61,6 +68,7 @@
     "noteurId": "usr_c01",
     "noteId": "usr_f01",
     "etoiles": 5,
+    "commentaire": "Catherine est toujours très sympa, bonne communication.",
     "dateNotation": "2026-02-03T11:00:00Z"
   },
   {
@@ -69,6 +77,7 @@
     "noteurId": "usr_f05",
     "noteId": "usr_c02",
     "etoiles": 4,
+    "commentaire": "Emma a bien géré, merci !",
     "dateNotation": "2026-02-09T10:00:00Z"
   },
   {
@@ -77,6 +86,7 @@
     "noteurId": "usr_f05",
     "noteId": "usr_f05",
     "etoiles": 5,
+    "commentaire": "",
     "dateNotation": "2026-02-10T10:00:00Z"
   },
   {
@@ -85,6 +95,7 @@
     "noteurId": "usr_f05",
     "noteId": "usr_f05",
     "etoiles": 5,
+    "commentaire": "",
     "dateNotation": "2026-02-10T11:00:00Z"
   },
   {
@@ -93,6 +104,7 @@
     "noteurId": "usr_f05",
     "noteId": "usr_f05",
     "etoiles": 4,
+    "commentaire": "",
     "dateNotation": "2026-02-10T12:00:00Z"
   },
   {
@@ -101,6 +113,7 @@
     "noteurId": "usr_f05",
     "noteId": "usr_f05",
     "etoiles": 5,
+    "commentaire": "",
     "dateNotation": "2026-02-10T13:00:00Z"
   },
   {
@@ -109,6 +122,7 @@
     "noteurId": "usr_f04",
     "noteId": "usr_f04",
     "etoiles": 4,
+    "commentaire": "",
     "dateNotation": "2026-02-08T10:00:00Z"
   },
   {
@@ -117,6 +131,7 @@
     "noteurId": "usr_f02",
     "noteId": "usr_f02",
     "etoiles": 4,
+    "commentaire": "",
     "dateNotation": "2026-02-04T10:00:00Z"
   },
   {
@@ -125,6 +140,7 @@
     "noteurId": "usr_f02",
     "noteId": "usr_f02",
     "etoiles": 4,
+    "commentaire": "",
     "dateNotation": "2026-02-06T10:00:00Z"
   }
 ]

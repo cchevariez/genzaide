@@ -35,6 +35,11 @@ const Auth = {
             <label class="form-label">Commune</label>
             <input type="text" class="form-input" id="auth-commune" placeholder="Ta commune">
           </div>
+          <div class="form-group">
+            <label class="form-label">Âge</label>
+            <input type="number" class="form-input" id="auth-age" placeholder="Ton âge" min="14" max="99" required>
+          </div>
+          <div id="auth-age-warnings" style="display:none"></div>
 
           <button class="btn btn-bleu btn-block" id="auth-submit">S'inscrire</button>
 
@@ -86,20 +91,42 @@ const Auth = {
         : 'Inscris-toi pour postuler';
     });
 
+    // Avertissements dynamiques selon l'âge
+    const ageInput = overlay.querySelector('#auth-age');
+    const ageWarnings = overlay.querySelector('#auth-age-warnings');
+    ageInput.addEventListener('input', () => {
+      const age = parseInt(ageInput.value);
+      if (!age || age >= 18) {
+        ageWarnings.style.display = 'none';
+        ageWarnings.innerHTML = '';
+        return;
+      }
+      let html = '';
+      if (age < 18) {
+        html += '<div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;font-size:0.85rem;color:#e65100"><strong>Autorisation parentale requise</strong><br>Un parent ou tuteur légal doit donner son accord.<div style="margin-top:0.5rem"><label class="form-label" style="font-size:0.8rem">Carte d\'identité du parent (upload simulé)</label><input type="file" accept="image/*,.pdf" style="font-size:0.8rem"></div></div>';
+      }
+      if (age < 16) {
+        html += '<div style="background:#ffebee;border:1px solid #ef9a9a;border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;font-size:0.85rem;color:#c62828"><strong>Autorisation de l\'inspecteur du travail requise</strong><br>15 jours avant l\'embauche, une demande doit être faite auprès de l\'inspecteur du travail.</div>';
+      }
+      ageWarnings.innerHTML = html;
+      ageWarnings.style.display = 'block';
+    });
+
     // Inscription
     overlay.querySelector('#auth-submit').addEventListener('click', async () => {
       const prenom = overlay.querySelector('#auth-prenom').value.trim();
       const nom = overlay.querySelector('#auth-nom').value.trim();
       const email = overlay.querySelector('#auth-email').value.trim();
       const commune = overlay.querySelector('#auth-commune').value.trim();
+      const age = parseInt(overlay.querySelector('#auth-age').value);
 
-      if (!prenom || !nom || !email) {
+      if (!prenom || !nom || !email || !age) {
         App.showToast('Remplis tous les champs obligatoires', 'error');
         return;
       }
 
       try {
-        const user = await API.createUser({ role, prenom, nom, email, commune });
+        const user = await API.createUser({ role, prenom, nom, email, commune, age });
         App.setSession(user);
         App.showToast(`Bienvenue ${user.prenom} !`, 'success');
         overlay.remove();
