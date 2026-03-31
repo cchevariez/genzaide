@@ -18,7 +18,62 @@ const Auth = {
             : 'Inscris-toi pour postuler'}
         </p>
 
-        <div id="auth-form">
+        <!-- Étape 1 : Écran réglementaire -->
+        <div id="auth-reglementation">
+          <div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:12px;padding:1.25rem;margin-bottom:1rem">
+            <h3 style="margin:0 0 0.75rem;font-size:1rem;color:#1565c0">Réglementation par tranche d'âge</h3>
+
+            <div style="background:#fff;border-radius:8px;padding:0.75rem;margin-bottom:0.75rem">
+              <strong style="color:#e65100">14-15 ans</strong>
+              <ul style="margin:0.3rem 0 0;padding-left:1.2rem;font-size:0.82rem;line-height:1.6;color:var(--texte)">
+                <li>Connexion France Identité obligatoire</li>
+                <li>Autorisation parentale + inspecteur du travail</li>
+                <li>Uniquement pendant les vacances scolaires</li>
+                <li>Max 7h/jour et 35h/semaine</li>
+                <li>Travail de nuit interdit (20h - 6h)</li>
+                <li>Rémunération minimum : 9,32 €/h brut (80% SMIC)</li>
+                <li>Paiement uniquement via l'application</li>
+              </ul>
+            </div>
+
+            <div style="background:#fff;border-radius:8px;padding:0.75rem;margin-bottom:0.75rem">
+              <strong style="color:#1565c0">16-17 ans</strong>
+              <ul style="margin:0.3rem 0 0;padding-left:1.2rem;font-size:0.82rem;line-height:1.6;color:var(--texte)">
+                <li>Connexion France Identité obligatoire</li>
+                <li>Accord écrit des parents (sauf mineurs émancipés)</li>
+                <li>Max 8h/jour et 35h/semaine, repos quotidien 12h</li>
+                <li>Travail interdit entre 22h et 6h</li>
+                <li>Rémunération minimum : 10,49 €/h brut (90% SMIC)</li>
+                <li>Plafond de 1 000 €/mois</li>
+              </ul>
+            </div>
+
+            <div style="background:#fff;border-radius:8px;padding:0.75rem">
+              <strong style="color:#2e7d32">18 ans et plus</strong>
+              <ul style="margin:0.3rem 0 0;padding-left:1.2rem;font-size:0.82rem;line-height:1.6;color:var(--texte)">
+                <li>Connexion France Identité obligatoire</li>
+                <li>Aucune restriction spécifique</li>
+                <li>Rémunération minimum : 11,65 €/h brut (SMIC)</li>
+                <li>Paiement uniquement via l'application</li>
+                <li>Plafond de 1 000 €/mois</li>
+              </ul>
+            </div>
+          </div>
+
+          <label style="display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:1.25rem;cursor:pointer;font-size:0.85rem">
+            <input type="checkbox" id="auth-accept-reglement" style="margin-top:0.2rem;width:18px;height:18px;flex-shrink:0">
+            <span>J'ai pris connaissance de ce formulaire et j'accepte les conditions liées à ma tranche d'âge.</span>
+          </label>
+
+          <button class="btn btn-bleu btn-block" id="auth-continue-btn" disabled>Continuer</button>
+
+          <p style="text-align:center; margin-top:1rem; font-size:0.85rem; color: var(--texte-secondaire)">
+            Déjà un compte ? <a href="#" id="auth-switch-to-login">Se connecter</a>
+          </p>
+        </div>
+
+        <!-- Étape 2 : Formulaire d'inscription -->
+        <div id="auth-form" style="display:none">
           <div class="form-group">
             <label class="form-label">Prénom</label>
             <input type="text" class="form-input" id="auth-prenom" placeholder="Ton prénom" required>
@@ -44,6 +99,7 @@ const Auth = {
           <button class="btn btn-bleu btn-block" id="auth-submit">S'inscrire</button>
 
           <p style="text-align:center; margin-top:1rem; font-size:0.85rem; color: var(--texte-secondaire)">
+            <a href="#" id="auth-back-reglement">Retour</a> |
             Déjà un compte ? <a href="#" id="auth-switch">Se connecter</a>
           </p>
         </div>
@@ -72,6 +128,40 @@ const Auth = {
       }
     });
 
+    // Checkbox réglementation
+    const acceptCheckbox = overlay.querySelector('#auth-accept-reglement');
+    const continueBtn = overlay.querySelector('#auth-continue-btn');
+    acceptCheckbox.addEventListener('change', () => {
+      continueBtn.disabled = !acceptCheckbox.checked;
+    });
+
+    // Continuer vers le formulaire
+    continueBtn.addEventListener('click', () => {
+      overlay.querySelector('#auth-reglementation').style.display = 'none';
+      overlay.querySelector('#auth-form').style.display = 'block';
+      overlay.querySelector('.modal-title').textContent = 'Créer un compte';
+      overlay.querySelector('.modal-subtitle').textContent = role === 'fournisseur'
+        ? 'Inscris-toi pour publier ton annonce'
+        : 'Inscris-toi pour postuler';
+    });
+
+    // Retour vers réglementation
+    overlay.querySelector('#auth-back-reglement').addEventListener('click', (e) => {
+      e.preventDefault();
+      overlay.querySelector('#auth-form').style.display = 'none';
+      overlay.querySelector('#auth-reglementation').style.display = 'block';
+      overlay.querySelector('.modal-title').textContent = 'Créer un compte';
+    });
+
+    // Passer directement au login depuis la réglementation
+    overlay.querySelector('#auth-switch-to-login').addEventListener('click', (e) => {
+      e.preventDefault();
+      overlay.querySelector('#auth-reglementation').style.display = 'none';
+      overlay.querySelector('#login-form').style.display = 'block';
+      overlay.querySelector('.modal-title').textContent = 'Se connecter';
+      overlay.querySelector('.modal-subtitle').textContent = 'Connecte-toi avec ton email';
+    });
+
     // Basculer inscription / connexion
     overlay.querySelector('#auth-switch').addEventListener('click', (e) => {
       e.preventDefault();
@@ -83,8 +173,8 @@ const Auth = {
 
     overlay.querySelector('#login-switch').addEventListener('click', (e) => {
       e.preventDefault();
-      overlay.querySelector('#auth-form').style.display = 'block';
       overlay.querySelector('#login-form').style.display = 'none';
+      overlay.querySelector('#auth-reglementation').style.display = 'block';
       overlay.querySelector('.modal-title').textContent = 'Créer un compte';
       overlay.querySelector('.modal-subtitle').textContent = role === 'fournisseur'
         ? 'Inscris-toi pour publier ton annonce'

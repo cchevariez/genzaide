@@ -12,7 +12,6 @@ const Wizard = {
     lng: null,
     salaireHeure: null,
     dureeHeures: null,
-    trancheAge: null,
     dateTravail: null,
     description: ''
   },
@@ -82,10 +81,6 @@ const Wizard = {
         this.data.adresse = document.getElementById('wizard-adresse').value.trim();
         return true;
       case 4:
-        if (!this.data.trancheAge) {
-          App.showToast('Sélectionne une tranche d\'âge visée', 'error');
-          return false;
-        }
         const customSalaire = document.getElementById('wizard-salaire-custom').value;
         if (customSalaire) {
           this.data.salaireHeure = parseFloat(customSalaire);
@@ -94,11 +89,8 @@ const Wizard = {
           App.showToast('Indique un salaire horaire', 'error');
           return false;
         }
-        // Validation salaire minimum selon tranche d'âge
-        const salaireMin = { '14-15': 9.32, '16-17': 10.49, '18+': 11.65 };
-        const minReq = salaireMin[this.data.trancheAge];
-        if (this.data.salaireHeure < minReq) {
-          App.showToast(`Le salaire minimum pour la tranche ${this.data.trancheAge} est de ${minReq} €/h brut`, 'error');
+        if (this.data.salaireHeure < 12) {
+          App.showToast('Le salaire minimum est de 12 €/h', 'error');
           return false;
         }
         if (!this.data.dureeHeures) {
@@ -229,37 +221,6 @@ const Wizard = {
     });
   },
 
-  // Étape 4 : Tranche d'âge, date, salaire et durée
-  selectTrancheAge(el) {
-    document.querySelectorAll('#tranche-age-grid .choice-option').forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    this.data.trancheAge = el.dataset.value;
-    this.updateDateNote();
-  },
-
-  updateDateNote() {
-    const noteDiv = document.getElementById('date-travail-note');
-    if (!this.data.trancheAge) {
-      noteDiv.style.display = 'none';
-      return;
-    }
-    let html = '';
-    if (this.data.trancheAge === '14-15') {
-      html = '<div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:0.75rem;margin-top:0.5rem;font-size:0.85rem;color:#e65100">Uniquement pendant les vacances scolaires, pas la nuit</div>';
-    } else if (this.data.trancheAge === '16-17') {
-      html = '<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;padding:0.75rem;margin-top:0.5rem;font-size:0.85rem;color:#1565c0">Pas entre 2h et 6h du matin</div>';
-    }
-    noteDiv.innerHTML = html;
-    noteDiv.style.display = html ? 'block' : 'none';
-  },
-
-  selectSalaire(el) {
-    document.querySelectorAll('#salaire-grid .choice-option').forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    this.data.salaireHeure = parseFloat(el.dataset.value);
-    document.getElementById('wizard-salaire-custom').value = '';
-  },
-
   selectDuree(el) {
     document.querySelectorAll('#duree-grid .choice-option').forEach(o => o.classList.remove('selected'));
     el.classList.add('selected');
@@ -300,6 +261,12 @@ const Wizard = {
     }
 
     Auth.requireAuth('fournisseur', async (user) => {
+      // Vérifier que l'utilisateur est bien un particulier
+      if (user.role === 'chercheur') {
+        App.showToast('Seuls les particuliers peuvent publier une annonce', 'error');
+        return;
+      }
+
       try {
         const annonce = await API.createAnnonce({
           ...this.data,
@@ -310,14 +277,39 @@ const Wizard = {
           window.location.href = 'chercheur.html';
         }, 1500);
       } catch (err) {
-        App.showToast('Erreur lors de la publication', 'error');
+        App.showToast(err.error || 'Erreur lors de la publication', 'error');
         console.error(err);
       }
     });
   }
 };
 
-// Initialiser au chargement
+// Mettre à jour l'info salaire sur changement du champ custom
 document.addEventListener('DOMContentLoaded', () => {
+  // Bloquer l'accès aux jeunes (chercheurs)
+  const session = App.getSession();
+  if (session && session.role === 'chercheur') {
+    const container = document.querySelector('.wizard-panel.active');
+    if (container) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🚫</div>
+          <h2>Accès réservé aux particuliers</h2>
+          <p style="margin-bottom:1.5rem">En tant que jeune, tu ne peux pas publier d'annonce. Tu peux chercher des missions sur la carte.</p>
+          <a href="chercheur.html" class="btn btn-bleu">Voir les annonces</a>
+        </div>
+      `;
+      return;
+    }
+  }
+
   Wizard.init();
+
+  const customInput = document.getElementById('wizard-salaire-custom');
+  if (customInput) {
+    customInput.addEventListener('input', () => {
+      const val = parseFloat(customInput.value);
+      if (val) Wizard.data.salaireHeure = val;
+    });
+  }
 });

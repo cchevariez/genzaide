@@ -66,16 +66,41 @@ const MapView = {
   },
 
   // Créer un marqueur personnalisé
-  createIcon(type) {
+  createIcon(type, grayed = false) {
     const cat = App.categories[type];
     const emoji = cat ? cat.icon : '📌';
+    const opacity = grayed ? '0.4' : '1';
     return L.divIcon({
       className: '',
-      html: `<div class="custom-marker"><span>${emoji}</span></div>`,
+      html: `<div class="custom-marker" style="opacity:${opacity}"><span>${emoji}</span></div>`,
       iconSize: [32, 32],
       iconAnchor: [16, 32],
       popupAnchor: [0, -32]
     });
+  },
+
+  // Vérifier si une annonce est compatible avec l'âge de l'utilisateur connecté
+  isAnnonceAccessible(annonce) {
+    const session = App.getSession();
+    if (!session || !session.age) return { accessible: true, reason: '' };
+
+    // Un adulte/particulier (fournisseur) ne peut pas postuler
+    if (session.role === 'fournisseur') {
+      return { accessible: false, reason: 'Vous êtes un particulier, vous ne pouvez pas postuler' };
+    }
+
+    const age = session.age;
+    const salaireMin = App.getSalaireMinForAge(age);
+
+    // Vérifier le salaire minimum
+    if (salaireMin && annonce.salaireHeure < salaireMin) {
+      return {
+        accessible: false,
+        reason: `Salaire en dessous du minimum légal pour votre tranche d'âge (${salaireMin} €/h)`
+      };
+    }
+
+    return { accessible: true, reason: '' };
   },
 
   // Afficher les marqueurs sur la carte
@@ -101,22 +126,27 @@ const MapView = {
 
       const cat = App.categories[annonce.type];
       const sousTypeLabel = cat?.sousTypes[annonce.sousType] || annonce.sousType;
+      const { accessible } = this.isAnnonceAccessible(annonce);
 
       const marker = L.marker([annonce.lat, annonce.lng], {
-        icon: this.createIcon(annonce.type)
+        icon: this.createIcon(annonce.type, !accessible)
       });
 
+      const grayStyle = !accessible ? 'opacity:0.5;' : '';
       const popupHtml = `
-        <div class="popup-content">
+        <div class="popup-content" style="${grayStyle}">
           <div class="popup-badge ${cat?.badge || ''}">${cat?.icon || ''} ${cat?.label || ''}</div>
           <h4>${sousTypeLabel}</h4>
           <div class="popup-info">
             <span>💰 ${annonce.salaireHeure} €/h — ${annonce.dureeHeures}h</span>
             <span>📍 ${annonce.commune}</span>
           </div>
-          <button class="btn btn-bleu btn-sm" onclick="MapView.showDetail('${annonce.id}')">
-            Voir l'annonce
-          </button>
+          ${!accessible
+            ? '<div style="color:#c62828;font-size:0.8rem;margin-top:0.3rem">Non accessible pour votre profil</div>'
+            : `<button class="btn btn-bleu btn-sm" onclick="MapView.showDetail('${annonce.id}')">
+                Voir l'annonce
+              </button>`
+          }
         </div>
       `;
 
@@ -265,6 +295,9 @@ const MapView = {
     const cat = App.categories[annonce.type];
     const sousTypeLabel = cat?.sousTypes[annonce.sousType] || annonce.sousType;
 
+    // Vérifier l'accessibilité
+    const { accessible, reason } = this.isAnnonceAccessible(annonce);
+
     // Charger les infos du fournisseur
     let fournisseurHtml = '';
     try {
@@ -284,6 +317,18 @@ const MapView = {
       // Pas grave si on ne peut pas charger le fournisseur
     }
 
+    // Avertissements réglementaires pour le chercheur
+    let reglementaireHtml = '';
+    const session = App.getSession();
+    if (session && session.age) {
+      const tranche = App.getTrancheAge(session.age);
+      if (tranche === '14-15') {
+        reglementaireHtml = '<div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:0.6rem;margin-top:0.75rem;font-size:0.8rem;color:#e65100">Rappel : uniquement pendant les vacances scolaires, pas de travail de nuit (20h-6h), max 7h/jour</div>';
+      } else if (tranche === '16-17') {
+        reglementaireHtml = '<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;padding:0.6rem;margin-top:0.75rem;font-size:0.8rem;color:#1565c0">Rappel : pas de travail entre 22h et 6h, max 8h/jour</div>';
+      }
+    }
+
     const content = document.getElementById('detail-content');
     content.innerHTML = `
       ${App.renderBadge(annonce.type)}
@@ -295,16 +340,22 @@ const MapView = {
         <span>💰 ${annonce.salaireHeure} €/h</span>
         <span>⏱️ ${annonce.dureeHeures}h</span>
         <span>💵 Total estimé : ${annonce.salaireHeure * annonce.dureeHeures} €</span>
-        <span>📅 ${App.formatDate(annonce.dateCreation)}</span>
+        ${annonce.dateTravail ? `<span>📅 ${App.formatDate(annonce.dateTravail)}</span>` : `<span>📅 ${App.formatDate(annonce.dateCreation)}</span>`}
       </div>
 
       <p class="card-description">${annonce.description}</p>
 
       ${fournisseurHtml}
+      ${reglementaireHtml}
 
-      <button class="btn btn-orange btn-block" style="margin-top:1.25rem" onclick="MapView.postuler('${annonce.id}')">
-        Postuler à cette annonce
-      </button>
+      ${!accessible
+        ? `<div style="background:#ffebee;border:1px solid #ef9a9a;border-radius:8px;padding:0.75rem;margin-top:1rem;font-size:0.85rem;color:#c62828;text-align:center">
+            <strong>Candidature impossible</strong><br>${reason}
+          </div>`
+        : `<button class="btn btn-orange btn-block" style="margin-top:1.25rem" onclick="MapView.postuler('${annonce.id}')">
+            Postuler à cette annonce
+          </button>`
+      }
     `;
 
     document.getElementById('detail-panel').classList.add('open');
@@ -317,6 +368,22 @@ const MapView = {
   // Postuler
   async postuler(annonceId) {
     Auth.requireAuth('chercheur', async (user) => {
+      // Vérifier que l'utilisateur n'est pas un fournisseur/particulier
+      if (user.role === 'fournisseur') {
+        App.showToast('En tant que particulier, vous ne pouvez pas postuler', 'error');
+        return;
+      }
+
+      // Vérifier la compatibilité d'âge
+      const annonce = this.allAnnonces.find(a => a.id === annonceId);
+      if (annonce) {
+        const salaireMin = App.getSalaireMinForAge(user.age);
+        if (salaireMin && annonce.salaireHeure < salaireMin) {
+          App.showToast(`Le salaire est en dessous du minimum légal pour votre âge (${salaireMin} €/h)`, 'error');
+          return;
+        }
+      }
+
       try {
         await API.createCandidature({
           annonceId,
@@ -327,6 +394,8 @@ const MapView = {
       } catch (err) {
         if (err.status === 409) {
           App.showToast('Tu as déjà postulé à cette annonce', 'error');
+        } else if (err.status === 403) {
+          App.showToast(err.error || 'Candidature non autorisée', 'error');
         } else {
           App.showToast('Erreur lors de la candidature', 'error');
         }

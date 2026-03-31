@@ -16,7 +16,8 @@ const dataFiles = {
   'users.json': [],
   'candidatures.json': [],
   'notations.json': [],
-  'suivi-legal.json': []
+  'suivi-legal.json': [],
+  'messages.json': []
 };
 
 if (!fs.existsSync(DATA_DIR)) {
@@ -28,7 +29,7 @@ for (const [file, defaultData] of Object.entries(dataFiles)) {
   const filePath = path.join(DATA_DIR, file);
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, JSON.stringify(defaultData, null, 2));
-    needSeed = true;
+    if (file !== 'messages.json') needSeed = true;
   }
 }
 
@@ -92,6 +93,13 @@ app.get('/api/annonces/:id', (req, res) => {
 });
 
 app.post('/api/annonces', (req, res) => {
+  // Vérifier que le créateur est un fournisseur (particulier)
+  const users = readJSON('users.json');
+  const creator = users.find(u => u.id === req.body.fournisseurId);
+  if (creator && creator.role === 'chercheur') {
+    return res.status(403).json({ error: 'Seuls les particuliers peuvent publier une annonce' });
+  }
+
   const annonces = readJSON('annonces.json');
   const annonce = {
     id: generateId('ann'),
@@ -129,6 +137,22 @@ app.put('/api/annonces/:id', (req, res) => {
   }
   writeJSON('annonces.json', annonces);
   res.json(annonces[index]);
+});
+
+// Supprimer une annonce
+app.delete('/api/annonces/:id', (req, res) => {
+  const annonces = readJSON('annonces.json');
+  const index = annonces.findIndex(a => a.id === req.params.id);
+  if (index === -1) return res.status(404).json({ error: 'Annonce non trouvée' });
+
+  // Supprimer les candidatures liées
+  const candidatures = readJSON('candidatures.json');
+  const filteredCand = candidatures.filter(c => c.annonceId !== req.params.id);
+  writeJSON('candidatures.json', filteredCand);
+
+  annonces.splice(index, 1);
+  writeJSON('annonces.json', annonces);
+  res.json({ success: true });
 });
 
 // --- Utilisateurs ---
@@ -172,9 +196,38 @@ app.get('/api/users/:id', (req, res) => {
 app.post('/api/candidatures', (req, res) => {
   const candidatures = readJSON('candidatures.json');
   const annonces = readJSON('annonces.json');
+  const users = readJSON('users.json');
 
   const annonceIndex = annonces.findIndex(a => a.id === req.body.annonceId);
   if (annonceIndex === -1) return res.status(404).json({ error: 'Annonce non trouvée' });
+
+  // Vérifier que l'utilisateur est un chercheur (pas un fournisseur/particulier)
+  const chercheur = users.find(u => u.id === req.body.chercheurId);
+  if (chercheur && chercheur.role === 'fournisseur') {
+    return res.status(403).json({ error: 'Un particulier ne peut pas postuler à une annonce' });
+  }
+
+  // Vérifier la compatibilité de salaire par rapport à l'âge
+  if (chercheur && chercheur.age) {
+    const salaireMinByAge = { '14-15': 9.32, '16-17': 10.49, '18+': 11.65 };
+    const tranche = chercheur.age >= 18 ? '18+' : chercheur.age >= 16 ? '16-17' : '14-15';
+    const minSalaire = salaireMinByAge[tranche];
+    if (annonces[annonceIndex].salaireHeure < minSalaire) {
+      return res.status(403).json({
+        error: `Le salaire de cette annonce (${annonces[annonceIndex].salaireHeure} €/h) est en dessous du minimum légal pour votre tranche d'âge (${minSalaire} €/h)`
+      });
+    }
+  }
+
+  // Vérifier si candidature déjà existante
+  const existing = candidatures.find(c =>
+    c.annonceId === req.body.annonceId &&
+    c.chercheurId === req.body.chercheurId &&
+    c.statut !== 'annulee'
+  );
+  if (existing) {
+    return res.status(409).json({ error: 'Candidature déjà existante' });
+  }
 
   const candidature = {
     id: generateId('cand'),
@@ -197,6 +250,10 @@ app.post('/api/candidatures', (req, res) => {
 
 app.get('/api/candidatures', (req, res) => {
   let candidatures = readJSON('candidatures.json');
+
+  // Filtrer les candidatures annulées par défaut
+  candidatures = candidatures.filter(c => c.statut !== 'annulee');
+
   if (req.query.annonceId) {
     candidatures = candidatures.filter(c => c.annonceId === req.query.annonceId);
   }
@@ -322,6 +379,79 @@ app.get('/api/suivi-legal/:chercheurId', (req, res) => {
   const totalHeures = suivi.reduce((sum, s) => sum + s.heuresTravaillees, 0);
   const totalArgent = suivi.reduce((sum, s) => sum + s.montantGagne, 0);
   res.json({ details: suivi, totalHeures, totalArgent });
+});
+
+// --- Messages ---
+app.post('/api/messages', (req, res) => {
+  const messages = readJSON('messages.json');
+  const message = {
+    id: generateId('msg'),
+    candidatureId: req.body.candidatureId,
+    senderId: req.body.senderId,
+    contenu: req.body.contenu,
+    date: new Date().toISOString()
+  };
+  messages.push(message);
+  writeJSON('messages.json', messages);
+  res.status(201).json(message);
+});
+
+app.get('/api/messages/:candidatureId', (req, res) => {
+  const messages = readJSON('messages.json');
+  const convMessages = messages
+    .filter(m => m.candidatureId === req.params.candidatureId)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  res.json(convMessages);
+});
+
+app.get('/api/conversations/:userId', (req, res) => {
+  const userId = req.params.userId;
+  const candidatures = readJSON('candidatures.json');
+  const annonces = readJSON('annonces.json');
+  const users = readJSON('users.json');
+  const messages = readJSON('messages.json');
+
+  // Trouver les candidatures acceptées/terminées impliquant l'utilisateur
+  const user = users.find(u => u.id === userId);
+  if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+
+  let relevantCands = [];
+  if (user.role === 'chercheur') {
+    relevantCands = candidatures.filter(c =>
+      c.chercheurId === userId && (c.statut === 'acceptee' || c.statut === 'terminee')
+    );
+  } else {
+    // Fournisseur : trouver les candidatures à ses annonces
+    const mesAnnonces = annonces.filter(a => a.fournisseurId === userId).map(a => a.id);
+    relevantCands = candidatures.filter(c =>
+      mesAnnonces.includes(c.annonceId) && (c.statut === 'acceptee' || c.statut === 'terminee')
+    );
+  }
+
+  const conversations = relevantCands.map(cand => {
+    const convMessages = messages.filter(m => m.candidatureId === cand.id);
+    const lastMsg = convMessages.length > 0
+      ? convMessages.sort((a, b) => new Date(b.date) - new Date(a.date))[0].contenu
+      : null;
+
+    // Trouver l'autre utilisateur
+    let otherId;
+    if (user.role === 'chercheur') {
+      const annonce = annonces.find(a => a.id === cand.annonceId);
+      otherId = annonce ? annonce.fournisseurId : null;
+    } else {
+      otherId = cand.chercheurId;
+    }
+    const otherUser = users.find(u => u.id === otherId) || { prenom: '?', nom: '?' };
+
+    return {
+      candidatureId: cand.id,
+      otherUser: { prenom: otherUser.prenom, nom: otherUser.nom },
+      lastMessage: lastMsg
+    };
+  });
+
+  res.json(conversations);
 });
 
 // --- Utilitaires ---

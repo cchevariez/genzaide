@@ -33,6 +33,9 @@ const API = {
   updateAnnonce(id, data) {
     return this.request('PUT', `/annonces/${id}`, data);
   },
+  deleteAnnonce(id) {
+    return this.request('DELETE', `/annonces/${id}`);
+  },
 
   // Utilisateurs
   createUser(data) {
@@ -69,5 +72,16 @@ const API = {
   // Suivi légal
   getSuiviLegal(chercheurId) {
     return this.request('GET', `/suivi-legal/${chercheurId}`);
+  },
+
+  // Messages
+  getMessages(candidatureId) {
+    return this.request('GET', `/messages/${candidatureId}`);
+  },
+  sendMessage(data) {
+    return this.request('POST', '/messages', data);
+  },
+  getConversations(userId) {
+    return this.request('GET', `/conversations/${userId}`);
   }
 };

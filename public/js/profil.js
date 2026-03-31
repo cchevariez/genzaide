@@ -29,7 +29,7 @@ const Profil = {
     document.getElementById('profil-avatar').textContent = `${u.prenom[0]}${u.nom[0]}`;
     document.getElementById('profil-name').textContent = `${u.prenom} ${u.nom}`;
     document.getElementById('profil-role').textContent =
-      u.role === 'fournisseur' ? 'Fournisseur d\'emploi' : 'Chercheur d\'emploi';
+      u.role === 'fournisseur' ? 'Particulier' : 'Jeune chercheur d\'emploi';
     document.getElementById('profil-stars').innerHTML =
       `${App.renderStars(u.noteMoyenne)} <span style="font-size:0.8rem;color:var(--texte-secondaire)">(${u.nombreNotations} avis)</span>`;
   },
@@ -40,10 +40,12 @@ const Profil = {
       tabs.innerHTML = `
         <button class="tab active" onclick="Profil.switchTab('annonces', this)">Mes annonces</button>
         <button class="tab" onclick="Profil.switchTab('candidatures', this)">Candidatures</button>
+        <button class="tab" onclick="Profil.switchTab('messages', this)">Messages</button>
       `;
     } else {
       tabs.innerHTML = `
         <button class="tab active" onclick="Profil.switchTab('candidatures', this)">Mes candidatures</button>
+        <button class="tab" onclick="Profil.switchTab('messages', this)">Messages</button>
         <button class="tab" onclick="Profil.switchTab('suivi', this)">Suivi légal</button>
       `;
     }
@@ -54,12 +56,15 @@ const Profil = {
     el.classList.add('active');
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.getElementById(`tab-${tab}`).classList.add('active');
+
+    if (tab === 'messages') {
+      this.loadMessages();
+    }
   },
 
   async loadData() {
     if (this.user.role === 'fournisseur') {
       await this.loadFournisseurData();
-      // Activer le premier onglet
       document.getElementById('tab-annonces').classList.add('active');
     } else {
       await this.loadChercheurData();
@@ -129,6 +134,11 @@ const Profil = {
         ? '<span style="color:var(--texte-secondaire)">Terminée</span>'
         : '<span style="color:var(--orange);font-weight:600">Pourvue</span>';
 
+    // Bouton supprimer pour les annonces ouvertes
+    const deleteBtn = annonce.statut === 'ouverte'
+      ? `<button class="btn btn-outline btn-sm" style="color:var(--erreur);border-color:var(--erreur);margin-top:0.5rem" onclick="Profil.deleteAnnonce('${annonce.id}')">Supprimer l'annonce</button>`
+      : '';
+
     return `
       <div class="card" style="margin-bottom:0.75rem">
         <div class="card-header">
@@ -143,6 +153,7 @@ const Profil = {
           <span>👥 ${annonce.candidatures.length} candidature(s)</span>
         </div>
         <p class="card-description">${annonce.description}</p>
+        ${deleteBtn}
       </div>
     `;
   },
@@ -182,6 +193,7 @@ const Profil = {
         <div class="card-actions">
           <button class="btn btn-orange btn-sm" onclick="Profil.updateCandidature('${cand.id}', 'terminee')">Marquer terminée</button>
           <button class="btn btn-bleu btn-sm" onclick="Profil.showRatingModal('${cand.chercheurId}', '${cand.annonceId}')">Noter</button>
+          <button class="btn btn-outline btn-sm" onclick="Profil.openMessaging('${cand.id}')">Envoyer un message</button>
         </div>
       `;
     }
@@ -330,9 +342,16 @@ const Profil = {
       cand.statut === 'acceptee' ? 'Acceptée' :
       cand.statut === 'terminee' ? 'Terminée' : 'Refusée';
 
-    let rateBtn = '';
+    let actions = '';
+    // Bouton annuler pour les candidatures en attente ou acceptées
+    if (cand.statut === 'en_attente' || cand.statut === 'acceptee') {
+      actions += `<button class="btn btn-outline btn-sm" style="color:var(--erreur);border-color:var(--erreur)" onclick="Profil.cancelCandidature('${cand.id}')">Annuler ma candidature</button>`;
+    }
+    if (cand.statut === 'acceptee') {
+      actions += `<button class="btn btn-outline btn-sm" onclick="Profil.openMessaging('${cand.id}')">Envoyer un message</button>`;
+    }
     if (cand.statut === 'terminee') {
-      rateBtn = `<button class="btn btn-bleu btn-sm" style="margin-top:0.5rem" onclick="Profil.showRatingModal('${cand.annonceId}', '${cand.annonceId}')">Noter le fournisseur</button>`;
+      actions += `<button class="btn btn-bleu btn-sm" onclick="Profil.showRatingModal('${cand.annonceId}', '${cand.annonceId}')">Noter le fournisseur</button>`;
     }
 
     return `
@@ -342,9 +361,172 @@ const Profil = {
           <span style="font-size:0.85rem;color:var(--texte-secondaire)">${App.formatDate(cand.dateCandidature)}</span>
           <span style="font-weight:600;color:${statutColor};font-size:0.85rem">${statutLabel}</span>
         </div>
-        ${rateBtn}
+        ${actions ? `<div class="card-actions" style="margin-top:0.5rem">${actions}</div>` : ''}
       </div>
     `;
+  },
+
+  // ============ MESSAGES ============
+  async loadMessages() {
+    const tabMessages = document.getElementById('tab-messages');
+    try {
+      const conversations = await API.getConversations(this.user.id);
+      if (conversations.length === 0) {
+        tabMessages.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">💬</div>
+            <p>Aucun message pour le moment</p>
+            <p style="font-size:0.85rem;color:var(--texte-secondaire);margin-top:0.5rem">Les messages sont disponibles une fois qu'une candidature est acceptée</p>
+          </div>`;
+        return;
+      }
+
+      let html = `
+        <div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:0.75rem;margin-bottom:1rem;font-size:0.82rem;color:#e65100">
+          <strong>Les messages sont enregistrés sur nos serveurs</strong> pour la sécurité de tous les utilisateurs.
+        </div>
+      `;
+
+      for (const conv of conversations) {
+        const otherUser = conv.otherUser;
+        const lastMsg = conv.lastMessage;
+        html += `
+          <div class="card" style="margin-bottom:0.75rem;cursor:pointer" onclick="Profil.openMessaging('${conv.candidatureId}')">
+            <div style="display:flex;align-items:center;gap:0.5rem">
+              <div class="profil-avatar" style="width:36px;height:36px;font-size:0.8rem">${otherUser.prenom[0]}${otherUser.nom[0]}</div>
+              <div style="flex:1">
+                <strong>${otherUser.prenom} ${otherUser.nom[0]}.</strong>
+                <p style="font-size:0.82rem;color:var(--texte-secondaire);margin:0.2rem 0 0">${lastMsg || 'Aucun message'}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      tabMessages.innerHTML = html;
+    } catch (err) {
+      tabMessages.innerHTML = `<div class="empty-state"><p>Erreur de chargement des messages</p></div>`;
+    }
+  },
+
+  // Ouvrir la modale de messagerie
+  async openMessaging(candidatureId) {
+    const existing = document.querySelector('.modal-overlay');
+    if (existing) existing.remove();
+
+    // Charger les messages existants
+    let messages = [];
+    try {
+      messages = await API.getMessages(candidatureId);
+    } catch (err) {}
+
+    const session = this.user;
+    const isMineur = session.age < 18;
+
+    // Messages pré-enregistrés adaptés
+    const presetMessages = isMineur ? [
+      'Bonjour, je suis disponible pour cette mission !',
+      'Quand est-ce que la mission commence ?',
+      'Pouvez-vous me donner plus de détails ?',
+      'Je confirme ma disponibilité.',
+      'Merci, à bientôt !',
+      'Je ne suis plus disponible, désolé.',
+      'Est-ce que je peux venir accompagné(e) ?',
+      'Quelle est l\'adresse exacte ?'
+    ] : [
+      'Bonjour, votre candidature est retenue !',
+      'La mission est prévue pour la date indiquée.',
+      'Pouvez-vous confirmer votre disponibilité ?',
+      'Voici l\'adresse exacte de la mission.',
+      'Merci pour votre travail !',
+      'La mission est annulée, désolé.',
+      'Avez-vous besoin de matériel particulier ?',
+      'Pouvez-vous arriver 10 minutes avant ?'
+    ];
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+    overlay.innerHTML = `
+      <div class="modal" style="max-width:500px;display:flex;flex-direction:column;max-height:85vh">
+        <div style="border-bottom:1px solid var(--gris-clair);padding-bottom:0.75rem;margin-bottom:0.75rem">
+          <h2 class="modal-title" style="margin-bottom:0.25rem">Messages</h2>
+          <div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:0.5rem;font-size:0.75rem;color:#e65100;text-align:center">
+            Les messages sont enregistrés sur nos serveurs pour la sécurité de tous.
+          </div>
+        </div>
+
+        <div id="messaging-messages" style="flex:1;overflow-y:auto;padding:0.5rem 0;min-height:200px">
+          ${messages.length === 0
+            ? '<p style="text-align:center;color:var(--texte-secondaire);font-size:0.85rem;padding:2rem 0">Aucun message. Sélectionnez un message ci-dessous.</p>'
+            : messages.map(m => `
+              <div style="margin-bottom:0.5rem;display:flex;${m.senderId === session.id ? 'justify-content:flex-end' : 'justify-content:flex-start'}">
+                <div style="max-width:80%;padding:0.5rem 0.75rem;border-radius:12px;font-size:0.85rem;
+                  ${m.senderId === session.id
+                    ? 'background:var(--bleu);color:white;border-bottom-right-radius:4px'
+                    : 'background:var(--gris-clair);color:var(--texte);border-bottom-left-radius:4px'}">
+                  ${m.contenu}
+                  <div style="font-size:0.7rem;opacity:0.7;margin-top:0.2rem">${new Date(m.date).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}</div>
+                </div>
+              </div>
+            `).join('')
+          }
+        </div>
+
+        <div style="border-top:1px solid var(--gris-clair);padding-top:0.75rem">
+          <p style="font-size:0.8rem;color:var(--texte-secondaire);margin-bottom:0.5rem">Choisissez un message :</p>
+          <div style="display:flex;flex-wrap:wrap;gap:0.4rem;max-height:150px;overflow-y:auto">
+            ${presetMessages.map((msg, i) => `
+              <button class="btn btn-outline btn-sm preset-msg" data-msg="${msg.replace(/"/g, '&quot;')}"
+                style="font-size:0.78rem;text-align:left;white-space:normal">${msg}</button>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Scroll en bas
+    const msgContainer = overlay.querySelector('#messaging-messages');
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+
+    // Clic sur message pré-enregistré
+    overlay.querySelectorAll('.preset-msg').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const contenu = btn.dataset.msg;
+        try {
+          await API.sendMessage({
+            candidatureId,
+            senderId: session.id,
+            contenu
+          });
+
+          // Ajouter le message visuellement
+          const msgDiv = document.createElement('div');
+          msgDiv.style.cssText = 'margin-bottom:0.5rem;display:flex;justify-content:flex-end';
+          msgDiv.innerHTML = `
+            <div style="max-width:80%;padding:0.5rem 0.75rem;border-radius:12px;font-size:0.85rem;background:var(--bleu);color:white;border-bottom-right-radius:4px">
+              ${contenu}
+              <div style="font-size:0.7rem;opacity:0.7;margin-top:0.2rem">${new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}</div>
+            </div>
+          `;
+
+          const emptyMsg = msgContainer.querySelector('p');
+          if (emptyMsg) emptyMsg.remove();
+          msgContainer.appendChild(msgDiv);
+          msgContainer.scrollTop = msgContainer.scrollHeight;
+
+          App.showToast('Message envoyé', 'success');
+        } catch (err) {
+          App.showToast('Erreur d\'envoi', 'error');
+        }
+      });
+    });
+
+    // Fermer
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
   },
 
   // ============ ACTIONS ============
@@ -359,7 +541,31 @@ const Profil = {
       // Recharger
       await this.loadData();
     } catch (err) {
-      App.showToast('Erreur', 'error');
+      App.showToast(err.error || 'Erreur', 'error');
+    }
+  },
+
+  // Annuler une candidature (chercheur)
+  async cancelCandidature(id) {
+    if (!confirm('Veux-tu vraiment annuler cette candidature ?')) return;
+    try {
+      await API.updateCandidature(id, { statut: 'annulee' });
+      App.showToast('Candidature annulée', 'success');
+      await this.loadData();
+    } catch (err) {
+      App.showToast(err.error || 'Erreur lors de l\'annulation', 'error');
+    }
+  },
+
+  // Supprimer une annonce (fournisseur)
+  async deleteAnnonce(id) {
+    if (!confirm('Veux-tu vraiment supprimer cette annonce ?')) return;
+    try {
+      await API.deleteAnnonce(id);
+      App.showToast('Annonce supprimée', 'success');
+      await this.loadData();
+    } catch (err) {
+      App.showToast(err.error || 'Erreur lors de la suppression', 'error');
     }
   },
 

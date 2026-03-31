@@ -78,6 +78,35 @@ const App = {
     }
   },
 
+  // Salaires minimums légaux par tranche d'âge
+  salaireMinByAge: {
+    '14-15': 9.32,
+    '16-17': 10.49,
+    '18+': 11.65
+  },
+
+  // Déterminer la tranche d'âge à partir de l'âge
+  getTrancheAge(age) {
+    if (age >= 18) return '18+';
+    if (age >= 16) return '16-17';
+    if (age >= 14) return '14-15';
+    return null;
+  },
+
+  // Obtenir le salaire minimum pour un âge donné
+  getSalaireMinForAge(age) {
+    const tranche = this.getTrancheAge(age);
+    return tranche ? this.salaireMinByAge[tranche] : null;
+  },
+
+  // Vérifier si une annonce est compatible avec l'âge du chercheur
+  isAnnonceCompatible(annonce, age) {
+    if (!age) return true;
+    const salaireMin = this.getSalaireMinForAge(age);
+    if (salaireMin && annonce.salaireHeure < salaireMin) return false;
+    return true;
+  },
+
   // Session utilisateur
   getSession() {
     const session = localStorage.getItem('genzaide_session');
@@ -163,6 +192,14 @@ const App = {
       `Contact après candidature.`;
   },
 
+  // Déterminer le rôle attendu en fonction de la page
+  getPageRole() {
+    const path = window.location.pathname;
+    if (path.includes('fournisseur')) return 'fournisseur';
+    if (path.includes('chercheur')) return 'chercheur';
+    return 'chercheur';
+  },
+
   // Initialiser la navbar
   initNavbar() {
     const navbar = document.querySelector('.navbar');
@@ -176,14 +213,27 @@ const App = {
       profilLink.style.display = '';
       profilLink.textContent = session.prenom || 'Profil';
     }
-    if (session && authLink) {
-      authLink.textContent = 'Déconnexion';
-      authLink.href = '#';
-      authLink.onclick = (e) => {
-        e.preventDefault();
-        this.clearSession();
-        window.location.href = '/';
-      };
+    if (authLink) {
+      if (session) {
+        authLink.textContent = 'Déconnexion';
+        authLink.href = '#';
+        authLink.onclick = (e) => {
+          e.preventDefault();
+          this.clearSession();
+          window.location.href = '/';
+        };
+      } else {
+        // Bouton Connexion : ouvrir la modale d'authentification
+        authLink.textContent = 'Connexion';
+        authLink.href = '#';
+        authLink.onclick = (e) => {
+          e.preventDefault();
+          const role = this.getPageRole();
+          Auth.showModal(role, (user) => {
+            location.reload();
+          });
+        };
+      }
     }
   }
 };
