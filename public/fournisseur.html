@@ -27,6 +27,17 @@
     <div class="container" style="padding: 1.5rem 1rem; flex: 1;">
       <div style="max-width: 550px; margin: 0 auto;">
 
+        <!-- Bandeau d'auth pour les particuliers non connectés -->
+        <div id="auth-banner" style="display:none;background:var(--blanc);border:1px solid var(--gris-clair);border-radius:12px;padding:1rem;margin-bottom:1rem;text-align:center">
+          <p style="margin:0 0 0.75rem;font-size:0.9rem;color:var(--texte-secondaire)">
+            Tu peux d'abord créer un compte ou te connecter, puis publier ton annonce quand tu veux.
+          </p>
+          <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap">
+            <button class="btn btn-bleu btn-sm" id="auth-banner-signup">Créer un compte</button>
+            <button class="btn btn-outline btn-sm" id="auth-banner-login">Se connecter</button>
+          </div>
+        </div>
+
         <!-- Barre de progression -->
         <div class="wizard-progress" id="wizard-progress"></div>
 

@@ -169,6 +169,18 @@ app.post('/api/users', (req, res) => {
     email: req.body.email,
     commune: req.body.commune || '',
     age: req.body.age || null,
+    adresse: req.body.adresse || '',
+    telephone: req.body.telephone || '',
+    // Champs spécifiques jeunes (chercheurs)
+    nationalite: req.body.nationalite || '',
+    dateNaissance: req.body.dateNaissance || '',
+    lieuNaissance: req.body.lieuNaissance || '',
+    numeroSecu: req.body.numeroSecu || '',
+    rib: req.body.rib || '',
+    // Champs profil (modifiables)
+    username: req.body.username || '',
+    bio: req.body.bio || '',
+    photoProfil: req.body.photoProfil || '',
     dateInscription: new Date().toISOString(),
     noteMoyenne: 0,
     nombreNotations: 0
@@ -176,6 +188,26 @@ app.post('/api/users', (req, res) => {
   users.push(user);
   writeJSON('users.json', users);
   res.status(201).json(user);
+});
+
+// Mise à jour profil utilisateur
+app.put('/api/users/:id', (req, res) => {
+  const users = readJSON('users.json');
+  const index = users.findIndex(u => u.id === req.params.id);
+  if (index === -1) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+
+  const editable = [
+    'username', 'bio', 'photoProfil',
+    'nom', 'prenom', 'commune', 'adresse', 'telephone',
+    'nationalite', 'dateNaissance', 'lieuNaissance', 'numeroSecu', 'rib'
+  ];
+  for (const key of editable) {
+    if (req.body[key] !== undefined) {
+      users[index][key] = req.body[key];
+    }
+  }
+  writeJSON('users.json', users);
+  res.json(users[index]);
 });
 
 app.post('/api/auth/login', (req, res) => {

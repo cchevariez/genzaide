@@ -91,10 +91,51 @@ const Auth = {
             <input type="text" class="form-input" id="auth-commune" placeholder="Ta commune">
           </div>
           <div class="form-group">
+            <label class="form-label">Adresse exacte</label>
+            <input type="text" class="form-input" id="auth-adresse" placeholder="Ex : 12 rue de la République, 69001 Lyon" required>
+          </div>
+          ${role === 'chercheur' ? `
+          <div class="form-group">
             <label class="form-label">Âge</label>
             <input type="number" class="form-input" id="auth-age" placeholder="Ton âge" min="14" max="99" required>
           </div>
           <div id="auth-age-warnings" style="display:none"></div>
+
+          <h3 style="font-size:0.95rem;margin:1.25rem 0 0.5rem;color:var(--bleu)">Informations légales</h3>
+          <p style="font-size:0.78rem;color:var(--texte-secondaire);margin-bottom:0.75rem">Ces informations sont nécessaires pour la déclaration légale de ton emploi.</p>
+
+          <div class="form-group">
+            <label class="form-label">Nationalité</label>
+            <input type="text" class="form-input" id="auth-nationalite" placeholder="Ex : Française" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date de naissance</label>
+            <input type="date" class="form-input" id="auth-date-naissance" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Lieu de naissance</label>
+            <input type="text" class="form-input" id="auth-lieu-naissance" placeholder="Ville de naissance" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Numéro de sécurité sociale</label>
+            <input type="text" class="form-input" id="auth-numero-secu" placeholder="15 chiffres" maxlength="15" pattern="[0-9]{13,15}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Numéro de téléphone</label>
+            <input type="tel" class="form-input" id="auth-telephone" placeholder="Ex : 06 12 34 56 78" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">RIB / IBAN</label>
+            <input type="text" class="form-input" id="auth-rib" placeholder="FR76 ..." required>
+            <p class="form-hint">Pour recevoir tes paiements via l'application.</p>
+          </div>
+          ` : `
+          <div class="form-group">
+            <label class="form-label">Numéro de téléphone</label>
+            <input type="tel" class="form-input" id="auth-telephone" placeholder="Ex : 06 12 34 56 78">
+          </div>
+          <input type="hidden" id="auth-age" value="35">
+          `}
 
           <button class="btn btn-bleu btn-block" id="auth-submit">S'inscrire</button>
 
@@ -181,10 +222,10 @@ const Auth = {
         : 'Inscris-toi pour postuler';
     });
 
-    // Avertissements dynamiques selon l'âge
+    // Avertissements dynamiques selon l'âge (uniquement pour les chercheurs)
     const ageInput = overlay.querySelector('#auth-age');
     const ageWarnings = overlay.querySelector('#auth-age-warnings');
-    ageInput.addEventListener('input', () => {
+    if (ageInput && ageWarnings) ageInput.addEventListener('input', () => {
       const age = parseInt(ageInput.value);
       if (!age || age >= 18) {
         ageWarnings.style.display = 'none';
@@ -204,19 +245,42 @@ const Auth = {
 
     // Inscription
     overlay.querySelector('#auth-submit').addEventListener('click', async () => {
-      const prenom = overlay.querySelector('#auth-prenom').value.trim();
-      const nom = overlay.querySelector('#auth-nom').value.trim();
-      const email = overlay.querySelector('#auth-email').value.trim();
-      const commune = overlay.querySelector('#auth-commune').value.trim();
-      const age = parseInt(overlay.querySelector('#auth-age').value);
+      const getVal = (sel) => {
+        const el = overlay.querySelector(sel);
+        return el ? el.value.trim() : '';
+      };
+      const prenom = getVal('#auth-prenom');
+      const nom = getVal('#auth-nom');
+      const email = getVal('#auth-email');
+      const commune = getVal('#auth-commune');
+      const adresse = getVal('#auth-adresse');
+      const telephone = getVal('#auth-telephone');
+      const age = parseInt(getVal('#auth-age'));
 
-      if (!prenom || !nom || !email || !age) {
+      if (!prenom || !nom || !email || !adresse) {
         App.showToast('Remplis tous les champs obligatoires', 'error');
         return;
       }
 
+      const payload = { role, prenom, nom, email, commune, adresse, telephone, age };
+
+      // Champs spécifiques aux jeunes
+      if (role === 'chercheur') {
+        const nationalite = getVal('#auth-nationalite');
+        const dateNaissance = getVal('#auth-date-naissance');
+        const lieuNaissance = getVal('#auth-lieu-naissance');
+        const numeroSecu = getVal('#auth-numero-secu');
+        const rib = getVal('#auth-rib');
+
+        if (!age || !nationalite || !dateNaissance || !lieuNaissance || !numeroSecu || !telephone || !rib) {
+          App.showToast('Remplis toutes les informations légales', 'error');
+          return;
+        }
+        Object.assign(payload, { nationalite, dateNaissance, lieuNaissance, numeroSecu, rib });
+      }
+
       try {
-        const user = await API.createUser({ role, prenom, nom, email, commune, age });
+        const user = await API.createUser(payload);
         App.setSession(user);
         App.showToast(`Bienvenue ${user.prenom} !`, 'success');
         overlay.remove();

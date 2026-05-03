@@ -303,6 +303,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Afficher le bandeau d'inscription/connexion si pas connecté en tant que particulier
+  const banner = document.getElementById('auth-banner');
+  if (banner && !session) {
+    banner.style.display = 'block';
+    document.getElementById('auth-banner-signup').addEventListener('click', () => {
+      Auth.showModal('fournisseur', (user) => {
+        banner.style.display = 'none';
+        App.initNavbar();
+        App.showToast(`Bienvenue ${user.prenom} !`, 'success');
+      });
+    });
+    document.getElementById('auth-banner-login').addEventListener('click', () => {
+      Auth.showModal('fournisseur', (user) => {
+        banner.style.display = 'none';
+        App.initNavbar();
+        if (user.role === 'chercheur') {
+          window.location.href = 'profil.html';
+        }
+      });
+      // Ouvrir directement l'écran de connexion
+      setTimeout(() => {
+        const switchLink = document.querySelector('#auth-switch-to-login');
+        if (switchLink) switchLink.click();
+      }, 50);
+    });
+  }
+
   Wizard.init();
 
   const customInput = document.getElementById('wizard-salaire-custom');

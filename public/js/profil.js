@@ -26,12 +26,164 @@ const Profil = {
 
   renderHeader() {
     const u = this.user;
-    document.getElementById('profil-avatar').textContent = `${u.prenom[0]}${u.nom[0]}`;
-    document.getElementById('profil-name').textContent = `${u.prenom} ${u.nom}`;
+    const avatarEl = document.getElementById('profil-avatar');
+    if (u.photoProfil) {
+      avatarEl.innerHTML = `<img src="${u.photoProfil}" alt="Photo" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    } else {
+      avatarEl.textContent = `${u.prenom[0]}${u.nom[0]}`;
+    }
+    const displayName = u.username ? u.username : `${u.prenom} ${u.nom}`;
+    document.getElementById('profil-name').textContent = displayName;
     document.getElementById('profil-role').textContent =
       u.role === 'fournisseur' ? 'Particulier' : 'Jeune chercheur d\'emploi';
     document.getElementById('profil-stars').innerHTML =
       `${App.renderStars(u.noteMoyenne)} <span style="font-size:0.8rem;color:var(--texte-secondaire)">(${u.nombreNotations} avis)</span>`;
+
+    // Bouton "Modifier mon profil"
+    const headerEl = document.querySelector('.profil-header');
+    let editBtn = document.getElementById('profil-edit-btn');
+    if (!editBtn && headerEl) {
+      editBtn = document.createElement('button');
+      editBtn.id = 'profil-edit-btn';
+      editBtn.className = 'btn btn-outline btn-sm';
+      editBtn.style.cssText = 'margin-left:auto;align-self:flex-start';
+      editBtn.textContent = 'Modifier mon profil';
+      editBtn.onclick = () => Profil.showEditModal();
+      headerEl.appendChild(editBtn);
+    }
+
+    // Affichage de la bio
+    let bioEl = document.getElementById('profil-bio');
+    if (u.bio) {
+      if (!bioEl) {
+        bioEl = document.createElement('div');
+        bioEl.id = 'profil-bio';
+        bioEl.style.cssText = 'background:var(--blanc);border-radius:12px;padding:1rem;margin-bottom:1rem;font-size:0.9rem;color:var(--texte);white-space:pre-wrap';
+        const stats = document.getElementById('profil-stats');
+        stats.parentNode.insertBefore(bioEl, stats);
+      }
+      bioEl.textContent = u.bio;
+    } else if (bioEl) {
+      bioEl.remove();
+    }
+  },
+
+  showEditModal() {
+    const u = this.user;
+    const existing = document.querySelector('.modal-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+    overlay.innerHTML = `
+      <div class="modal" style="max-width:500px;max-height:90vh;overflow-y:auto">
+        <h2 class="modal-title">Modifier mon profil</h2>
+        <p class="modal-subtitle">Personnalise ton profil public</p>
+
+        <div style="text-align:center;margin-bottom:1rem">
+          <div id="edit-avatar-preview" class="profil-avatar" style="width:80px;height:80px;font-size:1.5rem;margin:0 auto 0.5rem">
+            ${u.photoProfil
+              ? `<img src="${u.photoProfil}" alt="Photo" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+              : `${u.prenom[0]}${u.nom[0]}`}
+          </div>
+          <label class="btn btn-outline btn-sm" style="cursor:pointer">
+            Changer la photo
+            <input type="file" id="edit-photo" accept="image/*" style="display:none">
+          </label>
+          ${u.photoProfil ? '<button class="btn btn-outline btn-sm" id="edit-photo-remove" style="margin-left:0.5rem;color:var(--erreur);border-color:var(--erreur)">Supprimer</button>' : ''}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nom d'utilisateur</label>
+          <input type="text" class="form-input" id="edit-username" placeholder="Ex : jul-cleaner" value="${(u.username || '').replace(/"/g, '&quot;')}">
+          <p class="form-hint">Pseudo affiché publiquement (sinon, ton prénom et nom seront utilisés).</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Bio</label>
+          <textarea class="form-textarea" id="edit-bio" rows="4" placeholder="Quelques mots sur toi, tes disponibilités, tes compétences...">${(u.bio || '').replace(/</g, '&lt;')}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Commune</label>
+          <input type="text" class="form-input" id="edit-commune" value="${(u.commune || '').replace(/"/g, '&quot;')}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Adresse exacte</label>
+          <input type="text" class="form-input" id="edit-adresse" value="${(u.adresse || '').replace(/"/g, '&quot;')}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Téléphone</label>
+          <input type="tel" class="form-input" id="edit-telephone" value="${(u.telephone || '').replace(/"/g, '&quot;')}">
+        </div>
+
+        <div class="form-actions" style="display:flex;gap:0.5rem;margin-top:1rem">
+          <button class="btn btn-outline" id="edit-cancel" style="flex:1">Annuler</button>
+          <button class="btn btn-bleu" id="edit-save" style="flex:2">Enregistrer</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    let photoData = u.photoProfil || '';
+
+    // Upload photo (encode en data URL)
+    overlay.querySelector('#edit-photo').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        App.showToast('Image trop lourde (max 2 Mo)', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        photoData = ev.target.result;
+        overlay.querySelector('#edit-avatar-preview').innerHTML =
+          `<img src="${photoData}" alt="Photo" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Supprimer la photo
+    const removeBtn = overlay.querySelector('#edit-photo-remove');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', () => {
+        photoData = '';
+        overlay.querySelector('#edit-avatar-preview').textContent = `${u.prenom[0]}${u.nom[0]}`;
+        removeBtn.style.display = 'none';
+      });
+    }
+
+    // Annuler
+    overlay.querySelector('#edit-cancel').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+
+    // Enregistrer
+    overlay.querySelector('#edit-save').addEventListener('click', async () => {
+      const payload = {
+        username: overlay.querySelector('#edit-username').value.trim(),
+        bio: overlay.querySelector('#edit-bio').value.trim(),
+        commune: overlay.querySelector('#edit-commune').value.trim(),
+        adresse: overlay.querySelector('#edit-adresse').value.trim(),
+        telephone: overlay.querySelector('#edit-telephone').value.trim(),
+        photoProfil: photoData
+      };
+      try {
+        const updated = await API.updateUser(this.user.id, payload);
+        this.user = updated;
+        App.setSession(updated);
+        App.showToast('Profil mis à jour', 'success');
+        overlay.remove();
+        this.renderHeader();
+      } catch (err) {
+        App.showToast('Erreur lors de la mise à jour', 'error');
+      }
+    });
   },
 
   renderTabs() {
@@ -269,6 +421,16 @@ const Profil = {
       } else {
         const candHtml = await Promise.all(candidatures.map(c => this.renderCandidatureSent(c)));
         tabCand.innerHTML = candHtml.join('');
+
+        // Afficher la modale DREETS pour la première mission terminée non vue
+        const seenKey = `genzaide_seen_terminees_${this.user.id}`;
+        const seen = JSON.parse(localStorage.getItem(seenKey) || '[]');
+        const newTerminee = candidatures.find(c => c.statut === 'terminee' && !seen.includes(c.id));
+        if (newTerminee) {
+          seen.push(newTerminee.id);
+          localStorage.setItem(seenKey, JSON.stringify(seen));
+          this.showPostValidationModal('chercheur');
+        }
       }
 
       // Suivi légal
@@ -473,13 +635,21 @@ const Profil = {
         </div>
 
         <div style="border-top:1px solid var(--gris-clair);padding-top:0.75rem">
-          <p style="font-size:0.8rem;color:var(--texte-secondaire);margin-bottom:0.5rem">Choisissez un message :</p>
-          <div style="display:flex;flex-wrap:wrap;gap:0.4rem;max-height:150px;overflow-y:auto">
-            ${presetMessages.map((msg, i) => `
-              <button class="btn btn-outline btn-sm preset-msg" data-msg="${msg.replace(/"/g, '&quot;')}"
-                style="font-size:0.78rem;text-align:left;white-space:normal">${msg}</button>
-            `).join('')}
+          <div style="display:flex;gap:0.5rem;align-items:flex-end">
+            <textarea id="msg-custom-input" class="form-textarea" rows="2"
+              placeholder="Écris ton message..." style="flex:1;resize:none;font-size:0.9rem"></textarea>
+            <button class="btn btn-bleu btn-sm" id="msg-send-custom" style="white-space:nowrap">Envoyer</button>
           </div>
+
+          <details style="margin-top:0.75rem">
+            <summary style="font-size:0.8rem;color:var(--texte-secondaire);cursor:pointer">Messages rapides</summary>
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;max-height:150px;overflow-y:auto;margin-top:0.5rem">
+              ${presetMessages.map((msg, i) => `
+                <button class="btn btn-outline btn-sm preset-msg" data-msg="${msg.replace(/"/g, '&quot;')}"
+                  style="font-size:0.78rem;text-align:left;white-space:normal">${msg}</button>
+              `).join('')}
+            </div>
+          </details>
         </div>
       </div>
     `;
@@ -490,37 +660,59 @@ const Profil = {
     const msgContainer = overlay.querySelector('#messaging-messages');
     msgContainer.scrollTop = msgContainer.scrollHeight;
 
+    const escapeHtml = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const sendMessage = async (contenu) => {
+      contenu = (contenu || '').trim();
+      if (!contenu) return;
+      try {
+        await API.sendMessage({
+          candidatureId,
+          senderId: session.id,
+          contenu
+        });
+
+        const msgDiv = document.createElement('div');
+        msgDiv.style.cssText = 'margin-bottom:0.5rem;display:flex;justify-content:flex-end';
+        msgDiv.innerHTML = `
+          <div style="max-width:80%;padding:0.5rem 0.75rem;border-radius:12px;font-size:0.85rem;background:var(--bleu);color:white;border-bottom-right-radius:4px">
+            ${escapeHtml(contenu)}
+            <div style="font-size:0.7rem;opacity:0.7;margin-top:0.2rem">${new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}</div>
+          </div>
+        `;
+
+        const emptyMsg = msgContainer.querySelector('p');
+        if (emptyMsg) emptyMsg.remove();
+        msgContainer.appendChild(msgDiv);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+
+        App.showToast('Message envoyé', 'success');
+      } catch (err) {
+        App.showToast('Erreur d\'envoi', 'error');
+      }
+    };
+
     // Clic sur message pré-enregistré
     overlay.querySelectorAll('.preset-msg').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const contenu = btn.dataset.msg;
-        try {
-          await API.sendMessage({
-            candidatureId,
-            senderId: session.id,
-            contenu
-          });
+      btn.addEventListener('click', () => sendMessage(btn.dataset.msg));
+    });
 
-          // Ajouter le message visuellement
-          const msgDiv = document.createElement('div');
-          msgDiv.style.cssText = 'margin-bottom:0.5rem;display:flex;justify-content:flex-end';
-          msgDiv.innerHTML = `
-            <div style="max-width:80%;padding:0.5rem 0.75rem;border-radius:12px;font-size:0.85rem;background:var(--bleu);color:white;border-bottom-right-radius:4px">
-              ${contenu}
-              <div style="font-size:0.7rem;opacity:0.7;margin-top:0.2rem">${new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}</div>
-            </div>
-          `;
-
-          const emptyMsg = msgContainer.querySelector('p');
-          if (emptyMsg) emptyMsg.remove();
-          msgContainer.appendChild(msgDiv);
-          msgContainer.scrollTop = msgContainer.scrollHeight;
-
-          App.showToast('Message envoyé', 'success');
-        } catch (err) {
-          App.showToast('Erreur d\'envoi', 'error');
-        }
-      });
+    // Envoi de message libre
+    const customInput = overlay.querySelector('#msg-custom-input');
+    const sendCustomBtn = overlay.querySelector('#msg-send-custom');
+    sendCustomBtn.addEventListener('click', async () => {
+      const contenu = customInput.value;
+      if (!contenu.trim()) {
+        App.showToast('Écris un message avant d\'envoyer', 'error');
+        return;
+      }
+      await sendMessage(contenu);
+      customInput.value = '';
+    });
+    customInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendCustomBtn.click();
+      }
     });
 
     // Fermer
@@ -538,11 +730,101 @@ const Profil = {
         statut === 'refusee' ? 'Candidature refusée' :
         'Mission marquée comme terminée', 'success'
       );
+      if (statut === 'terminee') {
+        this.showPostValidationModal('fournisseur');
+      }
       // Recharger
       await this.loadData();
     } catch (err) {
       App.showToast(err.error || 'Erreur', 'error');
     }
+  },
+
+  // Afficher la modale de rappel légal après validation d'une mission
+  showPostValidationModal(role) {
+    const existing = document.querySelector('.modal-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+
+    let bodyHtml = '';
+    if (role === 'fournisseur') {
+      bodyHtml = `
+        <div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;padding:1rem;margin-bottom:1rem">
+          <h3 style="margin:0 0 0.5rem;font-size:1rem;color:#1565c0">Déclaration CESU obligatoire</h3>
+          <p style="margin:0 0 0.5rem;font-size:0.9rem">
+            En tant que particulier employeur, tu dois <strong>déclarer le jeune sur le CESU</strong>
+            (Chèque Emploi Service Universel) pour respecter tes obligations légales.
+          </p>
+          <p style="margin:0;font-size:0.85rem;color:var(--texte-secondaire)">
+            Cette déclaration permet au jeune de bénéficier d'une protection sociale et te donne droit à un crédit d'impôt.
+          </p>
+          <a href="https://www.cesu.urssaf.fr" target="_blank" rel="noopener"
+            class="btn btn-bleu btn-sm" style="margin-top:0.75rem;display:inline-block">
+            Aller sur cesu.urssaf.fr
+          </a>
+        </div>
+      `;
+    } else {
+      bodyHtml = `
+        <div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:1rem;margin-bottom:1rem">
+          <h3 style="margin:0 0 0.5rem;font-size:1rem;color:#e65100">Autorisation DREETS</h3>
+          <p style="margin:0 0 0.75rem;font-size:0.9rem">
+            Pour les jeunes mineurs, <strong>les parents doivent envoyer un mail à la DREETS</strong>
+            (Direction Régionale de l'Économie, de l'Emploi, du Travail et des Solidarités) pour obtenir
+            l'autorisation de travailler.
+          </p>
+          <details>
+            <summary style="cursor:pointer;font-weight:600;color:var(--bleu);font-size:0.9rem">Voir un exemple de mail</summary>
+            <div style="background:var(--blanc);border:1px solid var(--gris-clair);border-radius:8px;padding:0.75rem;margin-top:0.5rem;font-size:0.82rem;line-height:1.6;white-space:pre-line">Madame, Monsieur,
+
+Je soussigné(e) [Nom et prénom du parent ou représentant légal], agissant en qualité de représentant légal de mon enfant :
+• Nom et prénom : [à compléter]
+• Date de naissance : [à compléter]
+• Adresse : [à compléter]
+
+autorise celui-ci / celle-ci à être employé(e) par :
+• Nom de l'employeur : [à compléter]
+• Adresse : [à compléter]
+
+dans le cadre des activités suivantes :
+[description des tâches prévues]
+
+pour la période suivante :
+[dates]
+
+et selon les horaires suivants :
+[jours et horaires]
+
+Je certifie avoir pris connaissance des conditions de travail proposées et m'assurer qu'elles sont compatibles avec l'âge de mon enfant, sa santé, sa sécurité et sa scolarité.
+
+Fait pour servir et valoir ce que de droit.
+
+Fait à [ville], le [date]
+
+Signature du représentant légal
+[Nom, prénom]
+[Coordonnées]</div>
+          </details>
+        </div>
+      `;
+    }
+
+    overlay.innerHTML = `
+      <div class="modal" style="max-width:520px;max-height:85vh;overflow-y:auto">
+        <h2 class="modal-title">Mission terminée</h2>
+        <p class="modal-subtitle">Quelques formalités pour rester dans les règles</p>
+        ${bodyHtml}
+        <button class="btn btn-bleu btn-block" id="post-valid-close">J'ai compris</button>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    overlay.querySelector('#post-valid-close').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
   },
 
   // Annuler une candidature (chercheur)

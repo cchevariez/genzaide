@@ -47,6 +47,9 @@ const API = {
   getUser(id) {
     return this.request('GET', `/users/${id}`);
   },
+  updateUser(id, data) {
+    return this.request('PUT', `/users/${id}`, data);
+  },
 
   // Candidatures
   createCandidature(data) {
